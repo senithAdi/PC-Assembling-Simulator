@@ -5,9 +5,11 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import {
   Cpu,
   Zap,
@@ -25,11 +27,20 @@ import {
   Star,
   Activity,
   Award,
-  PlayCircle
+  PlayCircle,
+  Search
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
-import { componentsRegistry, buildScenarios, ComponentMetadata, BuildScenario } from "./componentsMetadata";
+import {
+  componentsRegistry,
+  buildScenarios,
+  ComponentMetadata,
+  BuildScenario,
+  CATEGORY_GROUPS,
+  groupByBrandAndGeneration
+} from "./componentsMetadata";
+import { ComponentImage } from "./ComponentImage";
 
 // Visual placeholder for sound effect
 function triggerPlacementSound() {
@@ -97,8 +108,8 @@ function DraggableComponent({ component, onSelect }: DraggableComponentProps) {
       <Card className="backdrop-blur-xl bg-card/80 border-primary/20 hover:shadow-md hover:border-primary/50 transition-all group relative overflow-hidden">
         <CardContent className="p-3">
           <div className="flex items-center gap-3">
-            <div className="size-12 shrink-0 rounded-lg bg-slate-900 border border-slate-700/50 flex items-center justify-center group-hover:scale-105 transition-transform">
-              {component.renderSvg("size-10")}
+            <div className="size-12 shrink-0 rounded-lg bg-slate-900 border border-slate-700/50 flex items-center justify-center p-1.5 group-hover:scale-105 transition-transform">
+              <ComponentImage component={component} className="size-10" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-1">
@@ -183,7 +194,7 @@ function InteractiveDropZone({
       {installedComponent ? (
         <div className="size-full flex flex-col items-center justify-center p-1 relative group">
           <div className="size-5/6 flex items-center justify-center">
-            {installedComponent.renderSvg("size-full max-h-full object-contain")}
+            <ComponentImage component={installedComponent} className="size-full max-h-full object-contain" />
           </div>
           <span className="absolute bottom-1 bg-emerald-950/90 text-emerald-300 border border-emerald-500/30 px-1 py-0.5 rounded text-[8px] max-w-[90%] truncate font-medium">
             {installedComponent.model}
@@ -233,7 +244,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   const [wiggleState, setWiggleState] = useState<string | null>(null); // For shakes
   const [isBooted, setIsBooted] = useState(false);
   const [showBootModal, setShowBootModal] = useState(false);
-  const [tabFilter, setTabFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState(CATEGORY_GROUPS[0].id);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Keep track of level threshold
   useEffect(() => {
@@ -252,6 +264,19 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   const requiredParts = ["Motherboard", "CPU", "Paste", "Cooler", "RAM", "SSD", "GPU", "PSU", "Case"];
   const installedCount = requiredParts.filter(p => installedComponents[p]).length;
   const completionPercentage = Math.round((installedCount / requiredParts.length) * 100);
+
+  // Component Registry browsing: category -> brand -> generation
+  const activeCategory = CATEGORY_GROUPS.find(g => g.id === categoryFilter) ?? CATEGORY_GROUPS[0];
+  const trimmedSearch = searchQuery.trim().toLowerCase();
+  const searchResults = trimmedSearch
+    ? componentsRegistry.filter(comp =>
+        comp.name.toLowerCase().includes(trimmedSearch) ||
+        comp.manufacturer.toLowerCase().includes(trimmedSearch) ||
+        comp.model.toLowerCase().includes(trimmedSearch)
+      )
+    : [];
+  const categoryComponents = componentsRegistry.filter(comp => activeCategory.types.includes(comp.type));
+  const brandGroups = groupByBrandAndGeneration(categoryComponents);
 
   const triggerConfetti = () => {
     confetti({
@@ -719,36 +744,83 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   <CardTitle className="text-lg">Component Registry</CardTitle>
                   <CardDescription>Drag components to build slots</CardDescription>
                 </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <Tabs value={tabFilter} onValueChange={setTabFilter} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full mb-3">
-                      <TabsTrigger value="all" className="text-[10px]">All</TabsTrigger>
-                      <TabsTrigger value="core" className="text-[10px]">Core</TabsTrigger>
-                      <TabsTrigger value="periph" className="text-[10px]">Misc</TabsTrigger>
-                    </TabsList>
-                    <ScrollArea className="h-[550px] pr-2">
+                <CardContent className="px-4 pb-4 space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search parts (name, brand)..."
+                      className="h-8 pl-8 text-xs"
+                    />
+                  </div>
+
+                  {!trimmedSearch && (
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="h-8 text-xs w-full">
+                        <SelectValue placeholder="Choose a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_GROUPS.map(group => (
+                          <SelectItem key={group.id} value={group.id} className="text-xs">
+                            {group.label} ({componentsRegistry.filter(c => group.types.includes(c.type)).length})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  <ScrollArea className="h-[500px] pr-2">
+                    {trimmedSearch ? (
                       <div className="space-y-2">
-                        {componentsRegistry
-                          .filter(comp => {
-                            if (tabFilter === "core") {
-                              return ["CPU", "Motherboard", "RAM", "GPU", "PSU", "SSD"].includes(comp.type);
-                            }
-                            if (tabFilter === "periph") {
-                              return !["CPU", "Motherboard", "RAM", "GPU", "PSU", "SSD"].includes(comp.type);
-                            }
-                            return true;
-                          })
-                          .map(comp => (
-                            <DraggableComponent 
-                              key={comp.id} 
-                              component={comp} 
-                              onSelect={setHighlightedComponent} 
-                            />
-                          ))
-                        }
+                        {searchResults.length === 0 && (
+                          <p className="text-xs text-muted-foreground text-center py-6">No parts match "{searchQuery}".</p>
+                        )}
+                        {searchResults.map(comp => (
+                          <DraggableComponent
+                            key={comp.id}
+                            component={comp}
+                            onSelect={setHighlightedComponent}
+                          />
+                        ))}
                       </div>
-                    </ScrollArea>
-                  </Tabs>
+                    ) : (
+                      <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
+                        {brandGroups.map(({ brand, generations }) => (
+                          <AccordionItem key={brand} value={brand} className="border-primary/10">
+                            <AccordionTrigger className="text-xs font-semibold py-2 hover:no-underline">
+                              {brand}
+                              <span className="ml-auto mr-2 text-[10px] font-normal text-muted-foreground">
+                                {generations.reduce((sum, g) => sum + g.models.length, 0)} model{generations.reduce((sum, g) => sum + g.models.length, 0) === 1 ? "" : "s"}
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-2">
+                              <div className="space-y-3">
+                                {generations.map(({ generation, models }) => (
+                                  <div key={generation ?? "__default"}>
+                                    {generation && (
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1.5 px-0.5">
+                                        {generation}
+                                      </p>
+                                    )}
+                                    <div className="space-y-2">
+                                      {models.map(comp => (
+                                        <DraggableComponent
+                                          key={comp.id}
+                                          component={comp}
+                                          onSelect={setHighlightedComponent}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    )}
+                  </ScrollArea>
                 </CardContent>
               </Card>
             </div>
@@ -1013,13 +1085,23 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="size-16 rounded-xl bg-slate-900 border border-slate-700/50 flex items-center justify-center p-2 shrink-0">
-                          {highlightedComponent.renderSvg("size-full")}
+                          <ComponentImage component={highlightedComponent} className="size-full" />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-foreground">{highlightedComponent.name}</h4>
-                          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 font-medium">
-                            Category: {highlightedComponent.type}
-                          </span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 font-medium">
+                              {highlightedComponent.type}
+                            </span>
+                            <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
+                              {highlightedComponent.manufacturer}
+                            </span>
+                            {highlightedComponent.generation && (
+                              <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
+                                {highlightedComponent.generation}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Separator />
