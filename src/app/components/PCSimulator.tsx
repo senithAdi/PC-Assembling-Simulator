@@ -47,7 +47,7 @@ import {
 } from "./componentsMetadata";
 import { ComponentImage } from "./ComponentImage";
 import { MotherboardIllustration } from "./MotherboardIllustration";
-import { MOBO_ZONES, rectStyle } from "./data/motherboardLayout";
+import { rectStyle, getBoardZones } from "./data/motherboardLayout";
 
 // Icon + short label for each component-type tab in the registry rail
 const CATEGORY_TABS: Record<string, { icon: LucideIcon; short: string }> = {
@@ -55,9 +55,9 @@ const CATEGORY_TABS: Record<string, { icon: LucideIcon; short: string }> = {
   motherboard: { icon: CircuitBoard, short: "Board" },
   ram: { icon: MemoryStick, short: "RAM" },
   gpu: { icon: MonitorPlay, short: "GPU" },
-  storage: { icon: HardDrive, short: "Storage" },
+  storage: { icon: HardDrive, short: "Store" },
   psu: { icon: Plug, short: "PSU" },
-  cooling: { icon: Fan, short: "Cooling" },
+  cooling: { icon: Fan, short: "Cool" },
   case: { icon: Box, short: "Case" },
   other: { icon: Package, short: "Other" }
 };
@@ -254,6 +254,13 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   const [showBootModal, setShowBootModal] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState(CATEGORY_GROUPS[0].id);
   const [searchQuery, setSearchQuery] = useState("");
+  const [moboImageFailed, setMoboImageFailed] = useState(false);
+
+  // Reset the motherboard-photo error state whenever the mounted board changes
+  const mountedMoboId = installedComponents["Motherboard"]?.id;
+  useEffect(() => {
+    setMoboImageFailed(false);
+  }, [mountedMoboId]);
 
   // Keep track of level threshold
   useEffect(() => {
@@ -412,18 +419,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
       // Trigger achievement check
       checkAchievementsUnlocked(item.type);
 
-      // Quiz mode popup if component contains quizzes
-      if (item.quiz && item.quiz.length > 0) {
-        // Find if any quiz has not been done yet, pick one
-        const randomQuizIndex = Math.floor(Math.random() * item.quiz.length);
-        const quizObj = item.quiz[randomQuizIndex];
-        setTimeout(() => {
-          setActiveQuiz(quizObj);
-          setQuizAnswerSelected(null);
-          setQuizSubmitted(false);
-          setQuizStatus(null);
-        }, 1200);
-      }
+      // Quizzes are optional now — students open them via the "Take Quiz" button
+      // in the Educational Info Panel instead of an automatic interruption.
     } else {
       // Incompatible placement
       setWiggleState(item.type);
@@ -461,6 +458,16 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         setShowAchievementsPopup(null);
       }, 3500);
     }
+  };
+
+  // Opens a component's quiz on demand (optional — triggered by the "Take Quiz" button)
+  const openQuizFor = (comp: ComponentMetadata) => {
+    if (!comp.quiz || comp.quiz.length === 0) return;
+    const q = comp.quiz[Math.floor(Math.random() * comp.quiz.length)];
+    setActiveQuiz(q);
+    setQuizAnswerSelected(null);
+    setQuizSubmitted(false);
+    setQuizStatus(null);
   };
 
   const handleQuizSubmit = () => {
@@ -524,16 +531,147 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
     }
   };
 
-  // Socket-accurate motherboard illustration + drop zones (see data/motherboardLayout.ts for the shared coordinates)
+  // Real motherboard photo (or SVG fallback) with drop zones overlaid on the board.
+  // Zone coordinates come from getBoardZones() so they can be tuned per board — see data/motherboardLayout.ts.
   const renderMotherboardMap = () => {
     const mobo = installedComponents["Motherboard"];
     const isMoboPlaced = !!mobo;
+    const zones = getBoardZones(mobo);
+    const showPhoto = isMoboPlaced && !!mobo.image && !moboImageFailed;
 
-    return (
-      <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
-        <MotherboardIllustration motherboard={mobo} installed={isMoboPlaced} />
+    const dropZones = isMoboPlaced && (
+      <>
+        {/* 24-Pin ATX Power */}
+        <InteractiveDropZone
+          label="24-Pin"
+          acceptType="Cables"
+          installedComponent={installedComponents["Cables"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses={`text-[8px] ${wiggleState === 'Cables' ? 'animate-bounce' : ''}`}
+          style={rectStyle(zones.atxPower)}
+        />
 
-        {!isMoboPlaced && (
+        {/* 8-Pin CPU Power */}
+        <InteractiveDropZone
+          label="CPU Power"
+          acceptType="Cables"
+          installedComponent={installedComponents["Cables"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses="text-[8px]"
+          style={rectStyle(zones.cpuPower)}
+        />
+
+        {/* CPU Socket */}
+        <InteractiveDropZone
+          label="CPU Socket"
+          acceptType="CPU"
+          installedComponent={installedComponents["CPU"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses={wiggleState === 'CPU' ? 'animate-bounce' : ''}
+          style={rectStyle(zones.cpuSocket)}
+        />
+
+        {/* Thermal Paste (only active once CPU installed) */}
+        {installedComponents["CPU"] && (
+          <InteractiveDropZone
+            label="Thermal Paste"
+            acceptType="Paste"
+            installedComponent={installedComponents["Paste"]}
+            activeDragItem={activeDragItem}
+            onDrop={handleDrop}
+            compatibilityChecker={checkCompatibility}
+            styleClasses={`border-indigo-400 bg-indigo-500/10 ${wiggleState === 'Paste' ? 'animate-bounce' : ''}`}
+            style={rectStyle(zones.paste)}
+          />
+        )}
+
+        {/* CPU Cooler (only active once Paste applied) */}
+        {installedComponents["Paste"] && (
+          <InteractiveDropZone
+            label="CPU Cooler"
+            acceptType="Cooler"
+            installedComponent={installedComponents["Cooler"]}
+            activeDragItem={activeDragItem}
+            onDrop={handleDrop}
+            compatibilityChecker={checkCompatibility}
+            styleClasses={`border-amber-500 bg-amber-500/10 ${wiggleState === 'Cooler' ? 'animate-bounce' : ''}`}
+            style={rectStyle(zones.cooler)}
+          />
+        )}
+
+        {/* RAM DIMM Slots */}
+        <InteractiveDropZone
+          label="RAM Slots"
+          acceptType="RAM"
+          installedComponent={installedComponents["RAM"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses={wiggleState === 'RAM' ? 'animate-bounce' : ''}
+          style={rectStyle(zones.ram)}
+        />
+
+        {/* PCIe x16 GPU Slot */}
+        <InteractiveDropZone
+          label="PCIe x16 (GPU)"
+          acceptType="GPU"
+          installedComponent={installedComponents["GPU"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses={wiggleState === 'GPU' ? 'animate-bounce' : ''}
+          style={rectStyle(zones.pcieX16)}
+        />
+
+        {/* M.2 NVMe SSD Slot */}
+        <InteractiveDropZone
+          label="M.2 SSD"
+          acceptType="SSD"
+          installedComponent={installedComponents["SSD"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses={`text-[8px] ${wiggleState === 'SSD' ? 'animate-bounce' : ''}`}
+          style={rectStyle(zones.m2)}
+        />
+
+        {/* PCIe x1 slot 1 - Network Card */}
+        <InteractiveDropZone
+          label="PCIe x1 (Net)"
+          acceptType="Network"
+          installedComponent={installedComponents["Network"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses="text-[8px]"
+          style={rectStyle(zones.pcieX1Net)}
+        />
+
+        {/* PCIe x1 slot 2 - Sound Card */}
+        <InteractiveDropZone
+          label="PCIe x1 (Audio)"
+          acceptType="Sound"
+          installedComponent={installedComponents["Sound"]}
+          activeDragItem={activeDragItem}
+          onDrop={handleDrop}
+          compatibilityChecker={checkCompatibility}
+          styleClasses="text-[8px]"
+          style={rectStyle(zones.pcieX1Snd)}
+        />
+      </>
+    );
+
+    // Empty chassis — prompt to mount a motherboard first
+    if (!isMoboPlaced) {
+      return (
+        <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
+          <MotherboardIllustration motherboard={mobo} installed={false} />
           <InteractiveDropZone
             label="Mount Motherboard here"
             acceptType="Motherboard"
@@ -544,135 +682,31 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
             styleClasses="border-primary/50 text-base font-medium"
             style={{ position: "absolute", inset: "6%" }}
           />
-        )}
+        </div>
+      );
+    }
 
-        {isMoboPlaced && (
-          <>
-            {/* 24-Pin ATX Power */}
-            <InteractiveDropZone
-              label="24-Pin"
-              acceptType="Cables"
-              installedComponent={installedComponents["Cables"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses={`text-[8px] ${wiggleState === 'Cables' ? 'animate-bounce' : ''}`}
-              style={rectStyle(MOBO_ZONES.atxPower)}
-            />
+    // Real motherboard photo as the board — drop zones overlaid on top of it.
+    if (showPhoto) {
+      return (
+        <div className="relative w-full bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner">
+          <img
+            src={mobo.image}
+            alt={mobo.name}
+            draggable={false}
+            onError={() => setMoboImageFailed(true)}
+            className="w-full h-auto block select-none pointer-events-none"
+          />
+          {dropZones}
+        </div>
+      );
+    }
 
-            {/* 8-Pin CPU Power */}
-            <InteractiveDropZone
-              label="CPU Power"
-              acceptType="Cables"
-              installedComponent={installedComponents["Cables"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses="text-[8px]"
-              style={rectStyle(MOBO_ZONES.cpuPower)}
-            />
-
-            {/* CPU Socket */}
-            <InteractiveDropZone
-              label="CPU Socket"
-              acceptType="CPU"
-              installedComponent={installedComponents["CPU"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses={wiggleState === 'CPU' ? 'animate-bounce' : ''}
-              style={rectStyle(MOBO_ZONES.cpuSocket)}
-            />
-
-            {/* Thermal Paste (only active once CPU installed) */}
-            {installedComponents["CPU"] && (
-              <InteractiveDropZone
-                label="Thermal Paste"
-                acceptType="Paste"
-                installedComponent={installedComponents["Paste"]}
-                activeDragItem={activeDragItem}
-                onDrop={handleDrop}
-                compatibilityChecker={checkCompatibility}
-                styleClasses={`border-indigo-400 bg-indigo-500/5 ${wiggleState === 'Paste' ? 'animate-bounce' : ''}`}
-                style={rectStyle(MOBO_ZONES.paste)}
-              />
-            )}
-
-            {/* CPU Cooler (only active once Paste applied) */}
-            {installedComponents["Paste"] && (
-              <InteractiveDropZone
-                label="CPU Cooler"
-                acceptType="Cooler"
-                installedComponent={installedComponents["Cooler"]}
-                activeDragItem={activeDragItem}
-                onDrop={handleDrop}
-                compatibilityChecker={checkCompatibility}
-                styleClasses={`border-amber-500 bg-amber-500/5 ${wiggleState === 'Cooler' ? 'animate-bounce' : ''}`}
-                style={rectStyle(MOBO_ZONES.cooler)}
-              />
-            )}
-
-            {/* RAM DIMM Slots */}
-            <InteractiveDropZone
-              label="RAM Slots"
-              acceptType="RAM"
-              installedComponent={installedComponents["RAM"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses={wiggleState === 'RAM' ? 'animate-bounce' : ''}
-              style={rectStyle(MOBO_ZONES.ram)}
-            />
-
-            {/* PCIe x16 GPU Slot */}
-            <InteractiveDropZone
-              label="PCIe x16 Slot (GPU)"
-              acceptType="GPU"
-              installedComponent={installedComponents["GPU"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses={wiggleState === 'GPU' ? 'animate-bounce' : ''}
-              style={rectStyle(MOBO_ZONES.pcieX16)}
-            />
-
-            {/* M.2 NVMe SSD Slot */}
-            <InteractiveDropZone
-              label="M.2 NVMe SSD"
-              acceptType="SSD"
-              installedComponent={installedComponents["SSD"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses={`text-[8px] ${wiggleState === 'SSD' ? 'animate-bounce' : ''}`}
-              style={rectStyle(MOBO_ZONES.m2)}
-            />
-
-            {/* PCIe x1 slot 1 - Network Card */}
-            <InteractiveDropZone
-              label="PCIe x1 (Net)"
-              acceptType="Network"
-              installedComponent={installedComponents["Network"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses="text-[8px]"
-              style={rectStyle(MOBO_ZONES.pcieX1Net)}
-            />
-
-            {/* PCIe x1 slot 2 - Sound Card */}
-            <InteractiveDropZone
-              label="PCIe x1 (Audio)"
-              acceptType="Sound"
-              installedComponent={installedComponents["Sound"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses="text-[8px]"
-              style={rectStyle(MOBO_ZONES.pcieX1Snd)}
-            />
-          </>
-        )}
+    // Mounted board without a usable photo — fall back to the drawn illustration.
+    return (
+      <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
+        <MotherboardIllustration motherboard={mobo} installed />
+        {dropZones}
       </div>
     );
   };
@@ -718,10 +752,43 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
           </div>
         </nav>
 
-        {/* Main Body Grid */}
-        <div className="max-w-[1800px] mx-auto px-6 py-6">
-          <div className="grid grid-cols-4 gap-6">
-            
+        {/* Main Body */}
+        <div className="max-w-[1800px] mx-auto px-6 py-6 space-y-6">
+
+          {/* Educational Progress — compact full-width strip on top */}
+          <Card className="backdrop-blur-xl bg-gradient-to-r from-indigo-900 to-indigo-800 border-0 text-white shadow-xl">
+            <CardContent className="p-3 flex items-center gap-5 flex-wrap">
+              <div className="flex items-center gap-2 shrink-0">
+                <Trophy className="size-5 text-yellow-400" />
+                <span className="text-sm font-semibold">Educational Progress</span>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
+                  <span className="text-lg font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
+                  <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
+                </div>
+                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
+                  <span className="text-lg font-bold text-pink-300 block leading-none">{level}</span>
+                  <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
+                </div>
+                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
+                  <span className="text-lg font-bold text-purple-300 block leading-none">{xp}</span>
+                  <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
+                </div>
+                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
+                  <span className="text-lg font-bold text-emerald-300 block leading-none">{accuracy}%</span>
+                  <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                <span className="text-[10px] opacity-80 whitespace-nowrap">XP {xp} / {level * 300}</span>
+                <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10 flex-1" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-3 gap-6">
+
             {/* Column 1: Components Library */}
             <div className="col-span-1">
               <Card className="backdrop-blur-xl bg-card/80 border-primary/20 sticky top-24">
@@ -741,7 +808,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   </div>
 
                   {trimmedSearch ? (
-                    <ScrollArea className="h-[560px] pr-2">
+                    <ScrollArea className="h-[600px] pr-2">
                       <div className="grid grid-cols-3 gap-2">
                         {searchResults.length === 0 && (
                           <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
@@ -756,9 +823,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       {/* Vertical component-type tab rail */}
-                      <div className="flex flex-col gap-1 w-[74px] shrink-0">
+                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0">
                         {CATEGORY_GROUPS.map(group => {
                           const tab = CATEGORY_TABS[group.id];
                           const Icon = tab?.icon ?? Box;
@@ -769,22 +836,22 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                               key={group.id}
                               onClick={() => setCategoryFilter(group.id)}
                               title={group.label}
-                              className={`flex flex-col items-center gap-1 rounded-lg py-2 px-1 border transition-all ${
+                              className={`flex items-center gap-2 rounded-lg py-2.5 px-2.5 border transition-all ${
                                 active
                                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                                   : 'bg-card/60 border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground'
                               }`}
                             >
-                              <Icon className="size-4" />
-                              <span className="text-[9px] font-semibold leading-tight text-center">{tab?.short ?? group.label}</span>
-                              <span className={`text-[8px] leading-none ${active ? 'opacity-80' : 'opacity-60'}`}>{count}</span>
+                              <Icon className="size-5 shrink-0" />
+                              <span className="text-[11px] font-semibold leading-tight text-left flex-1 truncate">{tab?.short ?? group.label}</span>
+                              <span className={`text-[10px] leading-none font-medium ${active ? 'opacity-80' : 'opacity-60'}`}>{count}</span>
                             </button>
                           );
                         })}
                       </div>
 
                       {/* Cards for the selected component type */}
-                      <ScrollArea className="h-[560px] flex-1 pr-2">
+                      <ScrollArea className="h-[600px] flex-1 pr-2">
                         <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
                           {brandGroups.map(({ brand, generations }) => (
                             <AccordionItem key={brand} value={brand} className="border-primary/10">
@@ -869,6 +936,129 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   )}
                 </CardContent>
               </Card>
+
+              {/* Educational Info Panel + Lesson Scenario (moved directly under the chassis) */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Educational Info Panel */}
+                <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Activity className="size-5 text-primary" />
+                      Educational Info Panel
+                    </CardTitle>
+                    <CardDescription className="text-xs">Click any component to study its hardware details</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {highlightedComponent ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="size-16 rounded-xl bg-slate-900 border border-slate-700/50 flex items-center justify-center p-2 shrink-0">
+                            <ComponentImage component={highlightedComponent} className="size-full" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-foreground">{highlightedComponent.name}</h4>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 font-medium">
+                                {highlightedComponent.type}
+                              </span>
+                              <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
+                                {highlightedComponent.manufacturer}
+                              </span>
+                              {highlightedComponent.generation && (
+                                <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
+                                  {highlightedComponent.generation}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Separator />
+
+                        <div className="space-y-2 text-xs">
+                          <div>
+                            <span className="font-bold text-primary block text-[10px] uppercase">Purpose:</span>
+                            <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.purpose}</p>
+                          </div>
+                          <div>
+                            <span className="font-bold text-primary block text-[10px] uppercase">How It Works:</span>
+                            <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.howItWorks}</p>
+                          </div>
+                          <div>
+                            <span className="font-bold text-primary block text-[10px] uppercase">Where It Connects:</span>
+                            <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.whereItConnects}</p>
+                          </div>
+                          <div className="p-2.5 bg-yellow-500/5 border border-yellow-500/20 rounded">
+                            <span className="font-bold text-yellow-600 dark:text-yellow-400 block text-[10px] uppercase">Interesting Fact:</span>
+                            <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.facts}</p>
+                          </div>
+                          <div className="p-2.5 bg-rose-500/5 border border-rose-500/20 rounded">
+                            <span className="font-bold text-rose-500 block text-[10px] uppercase">Common Mistake:</span>
+                            <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.mistakes}</p>
+                          </div>
+                        </div>
+
+                        {highlightedComponent.quiz && highlightedComponent.quiz.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-xs border-primary/40 text-primary hover:bg-primary/10"
+                            onClick={() => openQuizFor(highlightedComponent)}
+                          >
+                            <Star className="size-3.5 mr-1.5" />
+                            Take Optional Quiz (+25 XP)
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground text-xs">
+                        <Lightbulb className="size-8 mx-auto mb-2 opacity-50" />
+                        Select a component to view educational info
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Build Scenarios Card */}
+                <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-semibold">Select Lesson Scenario</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      variant={selectedScenario === null ? "default" : "outline"}
+                      className="w-full text-xs justify-start h-8"
+                      onClick={() => handleSelectScenario(null)}
+                    >
+                      Free Build Mode
+                    </Button>
+                    {buildScenarios.map(sc => (
+                      <Button
+                        key={sc.id}
+                        variant={selectedScenario?.id === sc.id ? "default" : "outline"}
+                        className="w-full text-xs justify-start h-auto py-2 flex flex-col items-start gap-0.5"
+                        onClick={() => handleSelectScenario(sc)}
+                      >
+                        <span className="font-semibold">{sc.title}</span>
+                        <span className="text-[10px] opacity-70">Difficulty: {sc.difficulty}</span>
+                      </Button>
+                    ))}
+
+                    {selectedScenario && (
+                      <div className="p-3 bg-muted/65 border border-border/50 rounded-lg mt-3 space-y-2">
+                        <h6 className="text-[11px] font-bold text-primary uppercase">Scenario Objectives:</h6>
+                        <ul className="space-y-1.5">
+                          {selectedScenario.objectives.map((obj, i) => (
+                            <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>{obj}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* AI Tutor Panel */}
               <Card className="backdrop-blur-xl bg-slate-900/80 border-indigo-500/30 overflow-hidden relative">
@@ -991,147 +1181,6 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
 
             </div>
 
-            {/* Column 4: Stats & Scenario Objectives & Info panel */}
-            <div className="col-span-1 space-y-6">
-              
-              {/* Gamification Progress Card (compact) */}
-              <Card className="backdrop-blur-xl bg-gradient-to-br from-indigo-900 to-indigo-850 border-0 text-white shadow-xl">
-                <CardContent className="p-3 space-y-2.5">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="size-4 text-yellow-400" />
-                    <span className="text-sm font-semibold">Educational Progress</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5 text-center">
-                    <div className="py-1.5 bg-white/5 rounded-md">
-                      <span className="text-lg font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
-                    </div>
-                    <div className="py-1.5 bg-white/5 rounded-md">
-                      <span className="text-lg font-bold text-pink-300 block leading-none">{level}</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
-                    </div>
-                    <div className="py-1.5 bg-white/5 rounded-md">
-                      <span className="text-lg font-bold text-purple-300 block leading-none">{xp}</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
-                    </div>
-                    <div className="py-1.5 bg-white/5 rounded-md">
-                      <span className="text-lg font-bold text-emerald-300 block leading-none">{accuracy}%</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
-                    </div>
-                  </div>
-                  <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10" />
-                </CardContent>
-              </Card>
-
-              {/* Build Scenarios Card */}
-              <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-semibold">Select Lesson Scenario</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button 
-                    variant={selectedScenario === null ? "default" : "outline"} 
-                    className="w-full text-xs justify-start h-8"
-                    onClick={() => handleSelectScenario(null)}
-                  >
-                    Free Build Mode
-                  </Button>
-                  {buildScenarios.map(sc => (
-                    <Button 
-                      key={sc.id}
-                      variant={selectedScenario?.id === sc.id ? "default" : "outline"}
-                      className="w-full text-xs justify-start h-auto py-2 flex flex-col items-start gap-0.5"
-                      onClick={() => handleSelectScenario(sc)}
-                    >
-                      <span className="font-semibold">{sc.title}</span>
-                      <span className="text-[10px] opacity-70">Difficulty: {sc.difficulty}</span>
-                    </Button>
-                  ))}
-                  
-                  {selectedScenario && (
-                    <div className="p-3 bg-muted/65 border border-border/50 rounded-lg mt-3 space-y-2">
-                      <h6 className="text-[11px] font-bold text-primary uppercase">Scenario Objectives:</h6>
-                      <ul className="space-y-1.5">
-                        {selectedScenario.objectives.map((obj, i) => (
-                          <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                            <span className="text-primary mt-0.5">•</span>
-                            <span>{obj}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Educational Info Side Panel */}
-              <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Activity className="size-5 text-primary" />
-                    Educational Info Panel
-                  </CardTitle>
-                  <CardDescription className="text-xs">Click any component to study its hardware details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {highlightedComponent ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-16 rounded-xl bg-slate-900 border border-slate-700/50 flex items-center justify-center p-2 shrink-0">
-                          <ComponentImage component={highlightedComponent} className="size-full" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm text-foreground">{highlightedComponent.name}</h4>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 font-medium">
-                              {highlightedComponent.type}
-                            </span>
-                            <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
-                              {highlightedComponent.manufacturer}
-                            </span>
-                            {highlightedComponent.generation && (
-                              <span className="text-[10px] bg-muted/65 text-muted-foreground px-1.5 py-0.5 rounded border border-border/50 font-medium">
-                                {highlightedComponent.generation}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <Separator />
-                      
-                      <div className="space-y-2 text-xs">
-                        <div>
-                          <span className="font-bold text-primary block text-[10px] uppercase">Purpose:</span>
-                          <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.purpose}</p>
-                        </div>
-                        <div>
-                          <span className="font-bold text-primary block text-[10px] uppercase">How It Works:</span>
-                          <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.howItWorks}</p>
-                        </div>
-                        <div>
-                          <span className="font-bold text-primary block text-[10px] uppercase">Where It Connects:</span>
-                          <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.whereItConnects}</p>
-                        </div>
-                        <div className="p-2.5 bg-yellow-500/5 border border-yellow-500/20 rounded">
-                          <span className="font-bold text-yellow-600 dark:text-yellow-400 block text-[10px] uppercase">Interesting Fact:</span>
-                          <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.facts}</p>
-                        </div>
-                        <div className="p-2.5 bg-rose-500/5 border border-rose-500/20 rounded">
-                          <span className="font-bold text-rose-500 block text-[10px] uppercase">Common Mistake:</span>
-                          <p className="text-muted-foreground leading-normal mt-0.5">{highlightedComponent.mistakes}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground text-xs">
-                      <Lightbulb className="size-8 mx-auto mb-2 opacity-50" />
-                      Select a component to view educational info
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-            </div>
           </div>
         </div>
       </div>

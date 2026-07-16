@@ -78,7 +78,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void
             No expensive equipment needed, no risk of damage.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Button size="lg" onClick={() => onNavigate('dashboard')} className="bg-gradient-to-r from-primary to-secondary text-lg px-8">
+            <Button size="lg" onClick={() => onNavigate('simulator')} className="bg-gradient-to-r from-primary to-secondary text-lg px-8">
               <Rocket className="size-5 mr-2" />
               Start Building Now
             </Button>
