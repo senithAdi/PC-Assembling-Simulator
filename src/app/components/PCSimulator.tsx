@@ -8,7 +8,6 @@ import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import {
   Cpu,
@@ -28,7 +27,13 @@ import {
   Activity,
   Award,
   PlayCircle,
-  Search
+  Search,
+  CircuitBoard,
+  MemoryStick,
+  MonitorPlay,
+  Plug,
+  Package,
+  type LucideIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
@@ -43,6 +48,19 @@ import {
 import { ComponentImage } from "./ComponentImage";
 import { MotherboardIllustration } from "./MotherboardIllustration";
 import { MOBO_ZONES, rectStyle } from "./data/motherboardLayout";
+
+// Icon + short label for each component-type tab in the registry rail
+const CATEGORY_TABS: Record<string, { icon: LucideIcon; short: string }> = {
+  cpu: { icon: Cpu, short: "CPU" },
+  motherboard: { icon: CircuitBoard, short: "Board" },
+  ram: { icon: MemoryStick, short: "RAM" },
+  gpu: { icon: MonitorPlay, short: "GPU" },
+  storage: { icon: HardDrive, short: "Storage" },
+  psu: { icon: Plug, short: "PSU" },
+  cooling: { icon: Fan, short: "Cooling" },
+  case: { icon: Box, short: "Case" },
+  other: { icon: Package, short: "Other" }
+};
 
 // Visual placeholder for sound effect
 function triggerPlacementSound() {
@@ -711,7 +729,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   <CardTitle className="text-lg">Component Registry</CardTitle>
                   <CardDescription>Drag components to build slots</CardDescription>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-3">
+                <CardContent className="px-3 pb-4 space-y-3">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input
@@ -722,23 +740,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                     />
                   </div>
 
-                  {!trimmedSearch && (
-                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                      <SelectTrigger className="h-8 text-xs w-full">
-                        <SelectValue placeholder="Choose a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORY_GROUPS.map(group => (
-                          <SelectItem key={group.id} value={group.id} className="text-xs">
-                            {group.label} ({componentsRegistry.filter(c => group.types.includes(c.type)).length})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  <ScrollArea className="h-[500px] pr-2">
-                    {trimmedSearch ? (
+                  {trimmedSearch ? (
+                    <ScrollArea className="h-[560px] pr-2">
                       <div className="grid grid-cols-3 gap-2">
                         {searchResults.length === 0 && (
                           <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
@@ -751,43 +754,74 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                           />
                         ))}
                       </div>
-                    ) : (
-                      <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
-                        {brandGroups.map(({ brand, generations }) => (
-                          <AccordionItem key={brand} value={brand} className="border-primary/10">
-                            <AccordionTrigger className="text-xs font-semibold py-2 hover:no-underline">
-                              {brand}
-                              <span className="ml-auto mr-2 text-[10px] font-normal text-muted-foreground">
-                                {generations.reduce((sum, g) => sum + g.models.length, 0)} model{generations.reduce((sum, g) => sum + g.models.length, 0) === 1 ? "" : "s"}
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-2">
-                              <div className="space-y-3">
-                                {generations.map(({ generation, models }) => (
-                                  <div key={generation ?? "__default"}>
-                                    {generation && (
-                                      <p className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1.5 px-0.5">
-                                        {generation}
-                                      </p>
-                                    )}
-                                    <div className="grid grid-cols-3 gap-2">
-                                      {models.map(comp => (
-                                        <DraggableComponent
-                                          key={comp.id}
-                                          component={comp}
-                                          onSelect={setHighlightedComponent}
-                                        />
-                                      ))}
+                    </ScrollArea>
+                  ) : (
+                    <div className="flex gap-2">
+                      {/* Vertical component-type tab rail */}
+                      <div className="flex flex-col gap-1 w-[74px] shrink-0">
+                        {CATEGORY_GROUPS.map(group => {
+                          const tab = CATEGORY_TABS[group.id];
+                          const Icon = tab?.icon ?? Box;
+                          const count = componentsRegistry.filter(c => group.types.includes(c.type)).length;
+                          const active = categoryFilter === group.id;
+                          return (
+                            <button
+                              key={group.id}
+                              onClick={() => setCategoryFilter(group.id)}
+                              title={group.label}
+                              className={`flex flex-col items-center gap-1 rounded-lg py-2 px-1 border transition-all ${
+                                active
+                                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                  : 'bg-card/60 border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                              }`}
+                            >
+                              <Icon className="size-4" />
+                              <span className="text-[9px] font-semibold leading-tight text-center">{tab?.short ?? group.label}</span>
+                              <span className={`text-[8px] leading-none ${active ? 'opacity-80' : 'opacity-60'}`}>{count}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Cards for the selected component type */}
+                      <ScrollArea className="h-[560px] flex-1 pr-2">
+                        <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
+                          {brandGroups.map(({ brand, generations }) => (
+                            <AccordionItem key={brand} value={brand} className="border-primary/10">
+                              <AccordionTrigger className="text-xs font-semibold py-2 hover:no-underline">
+                                {brand}
+                                <span className="ml-auto mr-2 text-[10px] font-normal text-muted-foreground">
+                                  {generations.reduce((sum, g) => sum + g.models.length, 0)} model{generations.reduce((sum, g) => sum + g.models.length, 0) === 1 ? "" : "s"}
+                                </span>
+                              </AccordionTrigger>
+                              <AccordionContent className="pb-2">
+                                <div className="space-y-3">
+                                  {generations.map(({ generation, models }) => (
+                                    <div key={generation ?? "__default"}>
+                                      {generation && (
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1.5 px-0.5">
+                                          {generation}
+                                        </p>
+                                      )}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {models.map(comp => (
+                                          <DraggableComponent
+                                            key={comp.id}
+                                            component={comp}
+                                            onSelect={setHighlightedComponent}
+                                          />
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    )}
-                  </ScrollArea>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </ScrollArea>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -960,40 +994,32 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
             {/* Column 4: Stats & Scenario Objectives & Info panel */}
             <div className="col-span-1 space-y-6">
               
-              {/* Gamification Progress Card */}
+              {/* Gamification Progress Card (compact) */}
               <Card className="backdrop-blur-xl bg-gradient-to-br from-indigo-900 to-indigo-850 border-0 text-white shadow-xl">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Trophy className="size-5 text-yellow-400" />
-                    Educational Progress
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="p-2 bg-white/5 rounded-lg">
-                      <span className="text-[10px] opacity-75 block uppercase font-bold">Build Completion</span>
-                      <span className="text-xl font-bold text-sky-300">{completionPercentage}%</span>
+                <CardContent className="p-3 space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="size-4 text-yellow-400" />
+                    <span className="text-sm font-semibold">Educational Progress</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 text-center">
+                    <div className="py-1.5 bg-white/5 rounded-md">
+                      <span className="text-lg font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
                     </div>
-                    <div className="p-2 bg-white/5 rounded-lg">
-                      <span className="text-[10px] opacity-75 block uppercase font-bold">Current Level</span>
-                      <span className="text-xl font-bold text-pink-300">Lvl {level}</span>
+                    <div className="py-1.5 bg-white/5 rounded-md">
+                      <span className="text-lg font-bold text-pink-300 block leading-none">{level}</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
                     </div>
-                    <div className="p-2 bg-white/5 rounded-lg">
-                      <span className="text-[10px] opacity-75 block uppercase font-bold">Total XP</span>
-                      <span className="text-xl font-bold text-purple-300">{xp} XP</span>
+                    <div className="py-1.5 bg-white/5 rounded-md">
+                      <span className="text-lg font-bold text-purple-300 block leading-none">{xp}</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
                     </div>
-                    <div className="p-2 bg-white/5 rounded-lg">
-                      <span className="text-[10px] opacity-75 block uppercase font-bold">Build Accuracy</span>
-                      <span className="text-xl font-bold text-emerald-300">{accuracy}%</span>
+                    <div className="py-1.5 bg-white/5 rounded-md">
+                      <span className="text-lg font-bold text-emerald-300 block leading-none">{accuracy}%</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] opacity-85">
-                      <span>XP Progress</span>
-                      <span>{xp} / {level * 300} XP</span>
-                    </div>
-                    <Progress value={(xp / (level * 300)) * 100} className="h-2 bg-white/10" />
-                  </div>
+                  <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10" />
                 </CardContent>
               </Card>
 

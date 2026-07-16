@@ -26,7 +26,7 @@ export const coolerComponents: ComponentMetadata[] = [
     facts: "Stock coolers usually come with pre-applied thermal paste on the bottom, simplifying assembly for beginners.",
     mistakes: "Using a stock cooler on high-end processors (like i7 or i9), causing the CPU to overheat and thermal throttle.",
     color: "from-blue-700 to-blue-500",
-    image: "/images/components/cooler/intel/laminar-rm1.png",
+    image: "/images/components/laminar-rm1.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="35" fill="#334155" stroke="#3B82F6" strokeWidth="3" />
@@ -70,7 +70,7 @@ export const coolerComponents: ComponentMetadata[] = [
     facts: "The Hyper 212 has stayed in production with only minor revisions for over a decade because its price-to-performance ratio remains hard to beat.",
     mistakes: "Forgetting to install the correct socket-specific mounting bracket (LGA1700 vs AM4/AM5 brackets differ) before attaching the cooler.",
     color: "from-purple-800 to-violet-600",
-    image: "/images/components/cooler/coolermaster/hyper-212-black.png",
+    image: "/images/components/hyper-212-black.png",
     renderSvg: coolerAirIcon(COOLERMASTER_PURPLE, "212"),
     quiz: [
       {
@@ -106,7 +106,7 @@ export const coolerComponents: ComponentMetadata[] = [
     facts: "Noctua is famous for its iconic brown/tan color scheme and engineering focus on high-efficiency aerodynamic fans.",
     mistakes: "Leaving the transparent protective plastic cover on the bottom of the heatsink base before mounting it to the CPU.",
     color: "from-amber-800 to-amber-700",
-    image: "/images/components/cooler/noctua/nh-d15.png",
+    image: "/images/components/nh-d15.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="20" y="15" width="60" height="25" fill="#94A3B8" stroke="#475569" strokeWidth="2" />
@@ -150,7 +150,7 @@ export const coolerComponents: ComponentMetadata[] = [
     facts: "AIO liquid coolers are sealed, maintenance-free units — unlike custom loop cooling, you never need to add or replace coolant yourself.",
     mistakes: "Mounting the radiator with the tubes pointing the wrong direction, forcing them to stretch or kink awkwardly to reach the CPU block.",
     color: "from-yellow-500 to-amber-400",
-    image: "/images/components/cooler/corsair/icue-h100i-elite.png",
+    image: "/images/components/icue-h100i-elite.png",
     renderSvg: coolerLiquidIcon(CORSAIR_YELLOW, "H100i AIO"),
     quiz: [
       {

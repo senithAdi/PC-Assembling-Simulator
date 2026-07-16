@@ -29,7 +29,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "A motherboard has layers (up to 10 or 12) of fiberglass and copper traces stacked together to create complex routing circuits.",
     mistakes: "Installing the motherboard directly onto the metal chassis without standoffs, which immediately short-circuits and destroys the board.",
     color: "from-indigo-900 to-indigo-700",
-    image: "/images/components/motherboard/asus/prime-z790-a.png",
+    image: "/images/components/prime-z790-a.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="5" y="5" width="90" height="90" rx="4" fill="#0F172A" stroke="#4F46E5" strokeWidth="3" />
@@ -80,7 +80,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "The 'E' in B650E signals that the chipset supports full PCIe 5.0 bandwidth on both the M.2 slot and graphics slot, unlike the base B650 chipset.",
     mistakes: "Confusing B650 and B650E boards — only 'E' boards guarantee PCIe 5.0 speeds on the primary GPU slot.",
     color: "from-indigo-800 to-violet-600",
-    image: "/images/components/motherboard/asus/rog-strix-b650e-f.png",
+    image: "/images/components/rog-strix-b650e-f.png",
     renderSvg: moboIcon(ASUS_INDIGO, "AM5"),
     quiz: [
       {
@@ -118,7 +118,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "Tomahawk boards are named after military missiles, reflecting their design focus on extreme reliability and rugged aesthetics.",
     mistakes: "Using excessive force when locking down the CPU retention bracket, which could warp the socket.",
     color: "from-slate-800 to-slate-600",
-    image: "/images/components/motherboard/msi/mag-b650-tomahawk.png",
+    image: "/images/components/mag-b650-tomahawk.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="5" y="5" width="90" height="90" rx="4" fill="#1C1917" stroke="#78716C" strokeWidth="3" />
@@ -167,7 +167,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "Built-in WiFi 6E support means the board can use the newer 6GHz wireless band, which has far less interference than older 2.4GHz and 5GHz bands.",
     mistakes: "Forgetting to screw on the included WiFi antenna before powering on, resulting in weak or no wireless signal.",
     color: "from-orange-900 to-amber-700",
-    image: "/images/components/motherboard/gigabyte/b650-aorus-elite-ax.png",
+    image: "/images/components/b650-aorus-elite-ax.png",
     renderSvg: moboIcon(GIGABYTE_ORANGE, "AM5"),
     quiz: [
       {
@@ -205,7 +205,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "Only motherboards with a 'Z' chipset (like Z690 or Z790) allow overclocking unlocked 'K' series Intel CPUs — B- and H-series boards lock the multiplier.",
     mistakes: "Buying a 'K' series unlocked CPU and pairing it with a budget H610 board, which cannot actually overclock it.",
     color: "from-red-950 to-red-700",
-    image: "/images/components/motherboard/msi/pro-z690-a.png",
+    image: "/images/components/pro-z690-a.png",
     renderSvg: moboIcon(MSI_RED, "LGA1700"),
     quiz: [
       {
@@ -243,7 +243,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "Micro-ATX motherboards are smaller than ATX, usually measuring 9.6 x 9.6 inches compared to ATX's 12 x 9.6 inches.",
     mistakes: "Trying to install DDR5 RAM into its slots; DDR4 slots are physically keyed differently.",
     color: "from-cyan-900 to-cyan-700",
-    image: "/images/components/motherboard/gigabyte/h610m-h.png",
+    image: "/images/components/h610m-h.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="10" y="10" width="80" height="80" rx="4" fill="#0E1726" stroke="#06B6D4" strokeWidth="3" />
@@ -291,7 +291,7 @@ export const motherboardComponents: ComponentMetadata[] = [
     facts: "The AM4 socket was used across five Ryzen CPU generations (1000 through 5000 series), giving A520 boards exceptional CPU upgrade flexibility.",
     mistakes: "Expecting to overclock a Ryzen CPU on an A520 board — the A-series chipset does not support CPU multiplier overclocking.",
     color: "from-indigo-950 to-slate-700",
-    image: "/images/components/motherboard/asus/prime-a520m-k.png",
+    image: "/images/components/prime-a520m-k.png",
     renderSvg: moboIcon(ASUS_INDIGO, "AM4"),
     quiz: [
       {

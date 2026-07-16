@@ -24,7 +24,7 @@ export const psuComponents: ComponentMetadata[] = [
     facts: "Non-modular PSUs have all cables permanently soldered inside. Unused cables must be tucked away neatly in the case.",
     mistakes: "Buying a generic, uncertified power supply, which can fail under stress and destroy other expensive hardware.",
     color: "from-zinc-700 to-zinc-500",
-    image: "/images/components/psu/evga/500-w1.png",
+    image: "/images/components/500-w1.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="15" y="15" width="70" height="70" rx="5" fill="#18181B" stroke="#71717A" strokeWidth="3" />
@@ -68,7 +68,7 @@ export const psuComponents: ComponentMetadata[] = [
     facts: "80 Plus Bronze certification guarantees at least 82% efficiency at typical load, meaning less wasted heat than an uncertified unit.",
     mistakes: "Pairing a 650W Bronze unit with a power-hungry flagship GPU that actually needs an 850W+ supply, causing instability under full load.",
     color: "from-red-800 to-red-600",
-    image: "/images/components/psu/msi/mag-a650bn.png",
+    image: "/images/components/mag-a650bn.png",
     renderSvg: psuIcon(MSI_RED, "650W"),
     quiz: [
       {
@@ -103,7 +103,7 @@ export const psuComponents: ComponentMetadata[] = [
     facts: "80 Plus Gold certification guarantees the PSU operates at a minimum of 80% to 90% efficiency under various workloads.",
     mistakes: "Using modular cables from a different PSU model, which can have different pinouts and instantly fry your hardware.",
     color: "from-amber-600 to-amber-500",
-    image: "/images/components/psu/corsair/rm750x.png",
+    image: "/images/components/rm750x.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="15" y="15" width="70" height="70" rx="5" fill="#18181B" stroke="#D97706" strokeWidth="3" />
@@ -146,7 +146,7 @@ export const psuComponents: ComponentMetadata[] = [
     facts: "High-wattage PSUs are actually most efficient when run at around 50% of their rated load, which is why enthusiasts often size up rather than cut it close.",
     mistakes: "Assuming a bigger wattage number always means more noise or wasted power — a quality high-wattage PSU run below its limit is often quieter and more efficient than a maxed-out smaller one.",
     color: "from-zinc-800 to-amber-600",
-    image: "/images/components/psu/evga/supernova-850-gt.png",
+    image: "/images/components/supernova-850-gt.png",
     renderSvg: psuIcon("#F59E0B", "850W"),
     quiz: [
       {

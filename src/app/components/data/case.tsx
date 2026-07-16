@@ -26,7 +26,7 @@ export const caseComponents: ComponentMetadata[] = [
     facts: "The H510 features a signature clean cable management bar that hides unsightly power wires running to the motherboard.",
     mistakes: "Buying an E-ATX (Extra Large) motherboard and finding out it won't physically fit into this ATX Mid-Tower case.",
     color: "from-violet-600 to-violet-500",
-    image: "/images/components/case/nzxt/h510.png",
+    image: "/images/components/h510.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="15" y="10" width="70" height="80" rx="3" fill="#18181B" stroke="#8B5CF6" strokeWidth="3" />
@@ -71,7 +71,7 @@ export const caseComponents: ComponentMetadata[] = [
     facts: "Fractal Design pioneered the 'Nanomesh' front filter used on the Meshify line, designed to block dust while barely restricting airflow.",
     mistakes: "Removing the included dust filters completely to 'improve airflow', which actually just lets dust build up faster inside the case.",
     color: "from-slate-500 to-slate-400",
-    image: "/images/components/case/fractal-design/meshify-c.png",
+    image: "/images/components/meshify-c.png",
     renderSvg: caseIcon(FRACTAL_GRAY, "MESHIFY"),
     quiz: [
       {
@@ -107,7 +107,7 @@ export const caseComponents: ComponentMetadata[] = [
     facts: "The 4000D contains Corsair's RapidRoute cable management system, which holds cables in a dedicated channel on the back.",
     mistakes: "Failing to clean the dust filters, causing air paths to plug and components to run hot.",
     color: "from-yellow-600 to-yellow-500",
-    image: "/images/components/case/corsair/4000d-airflow.png",
+    image: "/images/components/4000d-airflow.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="15" y="10" width="70" height="80" rx="3" fill="#2D2D2D" stroke="#EAB308" strokeWidth="3" />
@@ -152,7 +152,7 @@ export const caseComponents: ComponentMetadata[] = [
     facts: "The O11 Dynamic ships with zero pre-installed fans, since enthusiasts almost always plan a fully custom fan and radiator layout for it.",
     mistakes: "Buying this case without budgeting for extra fans separately, since — unlike most cases — it doesn't include enough fans to be functional out of the box.",
     color: "from-teal-700 to-cyan-500",
-    image: "/images/components/case/lian-li/o11-dynamic.png",
+    image: "/images/components/o11-dynamic.png",
     renderSvg: caseIcon(LIANLI_TEAL, "O11"),
     quiz: [
       {
