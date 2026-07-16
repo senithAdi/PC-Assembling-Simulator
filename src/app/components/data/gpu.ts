@@ -29,7 +29,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "The RTX 3060 actually has more VRAM (12GB) than some higher-tier cards from the same generation, making it popular for content creators too.",
     mistakes: "Assuming more VRAM alone means a faster card overall — VRAM capacity is only one part of graphics performance, not the whole picture.",
     color: "from-green-700 to-green-500",
-    image: "/images/components/gpu/nvidia/rtx-3060.png",
+    image: "/images/components/rtx-3060.png",
     renderSvg: gpuIcon(NVIDIA_GREEN, "RTX 3060"),
     quiz: [
       {
@@ -67,7 +67,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "The RTX 3080 was one of the most in-demand graphics cards ever released, with severe shortages during the 2020-2021 chip crisis.",
     mistakes: "Forgetting to connect both required 8-pin PCIe power cables from the PSU, causing the card to fail to power on or run at reduced performance.",
     color: "from-emerald-700 to-emerald-500",
-    image: "/images/components/gpu/nvidia/rtx-3080.png",
+    image: "/images/components/rtx-3080.png",
     renderSvg: gpuIcon(NVIDIA_GREEN, "RTX 3080"),
     quiz: [
       {
@@ -106,7 +106,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "NVIDIA RTX cards feature Tensor Cores designed to accelerate AI calculations and Ray Tracing Cores for realistic lighting.",
     mistakes: "Connecting the monitor cable into the Motherboard HDMI port rather than the GPU ports, resulting in poor frame rates.",
     color: "from-emerald-600 to-emerald-400",
-    image: "/images/components/gpu/nvidia/rtx-4060.png",
+    image: "/images/components/rtx-4060.png",
     renderSvg: gpuIcon(NVIDIA_GREEN, "RTX 4060"),
     quiz: [
       {
@@ -144,7 +144,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "The RTX 4080 Super requires a three-slot clearance on the back plate due to its massive cooling heatsink.",
     mistakes: "Using a weak 500W power supply, causing the PC to shut down under heavy workloads due to power overload.",
     color: "from-teal-600 to-teal-400",
-    image: "/images/components/gpu/nvidia/rtx-4080-super.png",
+    image: "/images/components/rtx-4080-super.png",
     renderSvg: gpuIcon(NVIDIA_GREEN, "RTX 4080S"),
     quiz: [
       {
@@ -183,7 +183,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "AMD Radeon cards use the FSR (FidelityFX Super Resolution) upscaling technology, an open alternative to NVIDIA's DLSS that works on many GPU brands.",
     mistakes: "Expecting NVIDIA-exclusive features like DLSS to work on an AMD card — always check which upscaling technology a game actually supports.",
     color: "from-red-700 to-red-500",
-    image: "/images/components/gpu/amd/rx-6600.png",
+    image: "/images/components/rx-6600.png",
     renderSvg: gpuIcon(AMD_RED, "RX 6600"),
     quiz: [
       {
@@ -221,7 +221,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "The RX 6800 XT's 16GB of VRAM matched or exceeded some more expensive competing cards at launch, a major selling point for creators.",
     mistakes: "Installing this large, three-slot-wide card into a compact case without first checking the case's maximum GPU length specification.",
     color: "from-red-800 to-orange-500",
-    image: "/images/components/gpu/amd/rx-6800-xt.png",
+    image: "/images/components/rx-6800-xt.png",
     renderSvg: gpuIcon(AMD_RED, "RX 6800XT"),
     quiz: [
       {
@@ -260,7 +260,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "RDNA 3 was AMD's first GPU architecture to use a 'chiplet' design on higher-end models, similar to how modern Ryzen CPUs are built.",
     mistakes: "Buying this budget card expecting flagship 4K ray-tracing performance — it's designed and priced for solid 1080p gaming instead.",
     color: "from-red-700 to-pink-500",
-    image: "/images/components/gpu/amd/rx-7600.png",
+    image: "/images/components/rx-7600.png",
     renderSvg: gpuIcon(AMD_RED, "RX 7600"),
     quiz: [
       {
@@ -298,7 +298,7 @@ export const gpuComponents: ComponentMetadata[] = [
     facts: "AMD frequently offers more VRAM than NVIDIA at the same price tier, which is why creators editing large video files often lean towards Radeon cards.",
     mistakes: "Overlooking driver and software differences between AMD and NVIDIA (e.g. no CUDA support) when the PC will also be used for certain creative or AI software.",
     color: "from-red-800 to-rose-500",
-    image: "/images/components/gpu/amd/rx-7800-xt.png",
+    image: "/images/components/rx-7800-xt.png",
     renderSvg: gpuIcon(AMD_RED, "RX 7800XT"),
     quiz: [
       {

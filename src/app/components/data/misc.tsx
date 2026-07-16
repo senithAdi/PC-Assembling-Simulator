@@ -24,7 +24,7 @@ export const fanComponents: ComponentMetadata[] = [
     facts: "Case fans have small arrows printed on their side frames indicating the direction of fan rotation and airflow.",
     mistakes: "Installing all fans facing inwards, resulting in high pressure, zero exhaust paths, and trapped hot air.",
     color: "from-neutral-700 to-neutral-500",
-    image: "/images/components/fan/corsair/sp120-pwm.png",
+    image: "/images/components/sp120-pwm.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="15" y="15" width="70" height="70" rx="4" fill="#1E293B" stroke="#64748B" strokeWidth="2.5" />
@@ -67,7 +67,7 @@ export const fanComponents: ComponentMetadata[] = [
     facts: "Noctua's brown and cream color scheme has become instantly recognizable in the PC building community as a mark of premium engineering.",
     mistakes: "Paying a premium price for these fans in a system where airflow is already bottlenecked elsewhere (like a nearly-solid front panel), wasting their performance advantage.",
     color: "from-amber-700 to-yellow-600",
-    image: "/images/components/fan/noctua/nf-a12x25.png",
+    image: "/images/components/nf-a12x25.png",
     renderSvg: fanIcon(NOCTUA_TAN),
     quiz: [
       {
@@ -104,7 +104,7 @@ export const miscComponents: ComponentMetadata[] = [
     facts: "Optical drives were standard in almost all PCs in the 2000s, but have been largely replaced by USB drives and high-speed internet.",
     mistakes: "Buying an optical drive for a modern case that has a solid mesh front panel with no 5.25\" drive slots.",
     color: "from-sky-900 to-sky-700",
-    image: "/images/components/optical/asus/drw-24f1st.png",
+    image: "/images/components/drw-24f1st.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="10" y="25" width="80" height="50" rx="2" fill="#262626" stroke="#404040" strokeWidth="2.5" />
@@ -146,7 +146,7 @@ export const miscComponents: ComponentMetadata[] = [
     facts: "High-end motherboards often have WiFi chips built directly into their rear I/O, but expansion cards allow older boards to upgrade.",
     mistakes: "Forgetting to plug the card's included USB cable into a motherboard USB header, which is required for Bluetooth to function.",
     color: "from-blue-900 to-blue-700",
-    image: "/images/components/network/tp-link/archer-tx50e.png",
+    image: "/images/components/archer-tx50e.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="25" y="25" width="55" height="40" rx="2" fill="#065F46" stroke="#047857" strokeWidth="2" />
@@ -190,7 +190,7 @@ export const miscComponents: ComponentMetadata[] = [
     facts: "Dedicated sound cards help prevent electrical buzz or static noise caused by high-power components like GPUs.",
     mistakes: "Installing a sound card directly underneath a massive graphics card, blocking the GPU fans and causing high temps.",
     color: "from-rose-900 to-rose-700",
-    image: "/images/components/sound/creative/sound-blaster-audigy.png",
+    image: "/images/components/sound-blaster-audigy.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="25" y="25" width="55" height="40" rx="2" fill="#1C1917" stroke="#DC2626" strokeWidth="2" />
@@ -233,7 +233,7 @@ export const miscComponents: ComponentMetadata[] = [
     facts: "Thermal paste does not act as glue. The heatsink is held in place by metal brackets, not by the paste itself.",
     mistakes: "Applying an entire syringe of paste at once, which oozes down onto the motherboard and makes a massive mess.",
     color: "from-teal-800 to-teal-600",
-    image: "/images/components/paste/arctic/mx-6.png",
+    image: "/images/components/mx-6.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <line x1="10" y1="50" x2="80" y2="50" stroke="#475569" strokeWidth="8" strokeLinecap="round" />
@@ -275,7 +275,7 @@ export const miscComponents: ComponentMetadata[] = [
     facts: "Modern SATA III data cables have locking metal latches on the connectors to prevent them from slipping out due to fan vibrations.",
     mistakes: "Forgetting to connect the CPU 8-pin power cable at the top-left of the motherboard, which will result in the fans spinning but the computer refusing to boot.",
     color: "from-zinc-900 to-zinc-700",
-    image: "/images/components/cables/premium/braided-extension-kit.png",
+    image: "/images/components/braided-extension-kit.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10,30 Q30,60 50,30 T90,30" fill="none" stroke="#27272A" strokeWidth="4" />

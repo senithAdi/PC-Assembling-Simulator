@@ -24,7 +24,7 @@ export const storageComponents: ComponentMetadata[] = [
     facts: "NVMe SSDs communicate directly with the CPU using PCIe lanes, allowing speeds up to 10-15 times faster than older SATA SSDs.",
     mistakes: "Forgetting to peel the protective plastic sticker off the motherboard's thermal M.2 pad before covering the SSD.",
     color: "from-sky-700 to-sky-500",
-    image: "/images/components/ssd/samsung/980-pro-1tb.png",
+    image: "/images/components/980-pro-1tb.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="5" y="42" width="90" height="16" rx="1" fill="#0F172A" stroke="#0EA5E9" strokeWidth="1.5" />
@@ -69,7 +69,7 @@ export const storageComponents: ComponentMetadata[] = [
     facts: "Even a 'budget' NVMe drive like the SN580 is typically 5-8 times faster than a traditional SATA SSD for everyday tasks like booting Windows.",
     mistakes: "Installing the M.2 SSD in a slot that shares bandwidth with a SATA port, unknowingly disabling one of the motherboard's SATA connectors.",
     color: "from-blue-700 to-sky-400",
-    image: "/images/components/ssd/wd/blue-sn580-1tb.png",
+    image: "/images/components/blue-sn580-1tb.png",
     renderSvg: ssdIcon(WD_BLUE, "WD BLUE"),
     quiz: [
       {
@@ -104,7 +104,7 @@ export const storageComponents: ComponentMetadata[] = [
     facts: "2.5-inch SSDs are completely shock-resistant; dropping them will not damage the data inside unlike classic HDDs.",
     mistakes: "Forgetting that a 2.5\" SATA SSD requires two cables (Data and Power) to function, not just one.",
     color: "from-blue-800 to-blue-600",
-    image: "/images/components/ssd/crucial/mx500-1tb.png",
+    image: "/images/components/mx500-1tb.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="20" y="20" width="60" height="60" rx="3" fill="#374151" stroke="#2563EB" strokeWidth="2.5" />
@@ -149,7 +149,7 @@ export const storageComponents: ComponentMetadata[] = [
     facts: "7200 RPM means the magnetic disks inside spin at 7,200 revolutions per minute, which is 120 times every single second!",
     mistakes: "Installing the operating system on an HDD in a modern PC. It makes the system feel incredibly slow compared to using an SSD.",
     color: "from-lime-800 to-lime-600",
-    image: "/images/components/hdd/seagate/barracuda-2tb.png",
+    image: "/images/components/barracuda-2tb.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="20" y="15" width="60" height="70" rx="4" fill="#4B5563" stroke="#84CC16" strokeWidth="3" />
@@ -194,7 +194,7 @@ export const storageComponents: ComponentMetadata[] = [
     facts: "WD Black drives use a dual-actuator-ready design and reinforced internals aimed at handling more read/write cycles than standard consumer HDDs.",
     mistakes: "Relying on a single HDD as the only backup for important files — mechanical drives can fail suddenly, so backups should never depend on one drive alone.",
     color: "from-neutral-900 to-neutral-700",
-    image: "/images/components/hdd/wd/black-2tb.png",
+    image: "/images/components/black-2tb.png",
     renderSvg: hddIcon(WD_BLUE, "WD BLACK"),
     quiz: [
       {

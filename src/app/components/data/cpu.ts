@@ -30,7 +30,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "The 'F' suffix on Intel CPUs always means the on-chip graphics silicon has been disabled or removed, lowering the price.",
     mistakes: "Building a PC with an 'F' series CPU and forgetting to buy a separate graphics card, resulting in no video output at all.",
     color: "from-blue-500 to-blue-300",
-    image: "/images/components/cpu/intel/i5-12400f.png",
+    image: "/images/components/i5-12400f.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -69,7 +69,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "12th Gen was the first mainstream desktop CPU generation to introduce a hybrid 'big.LITTLE' style core design to Intel desktops.",
     mistakes: "Assuming all 12 cores are equally powerful — E-cores are much slower than P-cores and are meant for background tasks, not gaming.",
     color: "from-blue-600 to-blue-400",
-    image: "/images/components/cpu/intel/i7-12700k.png",
+    image: "/images/components/i7-12700k.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -109,7 +109,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "Modern CPUs contain billions of microscopic transistors etched onto a silicon die smaller than a postage stamp.",
     mistakes: "Touching the gold pads on the underside of the CPU, or placing it in the socket backwards, which bends the motherboard pins.",
     color: "from-blue-600 to-blue-400",
-    image: "/images/components/cpu/intel/i5-13600k.png",
+    image: "/images/components/i5-13600k.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -148,7 +148,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "At full load the i9-13900K can briefly draw over 250 Watts of power — more than some entire budget PCs.",
     mistakes: "Pairing this CPU with a budget stock cooler or a weak motherboard VRM, causing severe thermal throttling under sustained load.",
     color: "from-blue-700 to-blue-500",
-    image: "/images/components/cpu/intel/i9-13900k.png",
+    image: "/images/components/i9-13900k.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -188,7 +188,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "14th Gen desktop CPUs use the exact same LGA1700 socket as 12th and 13th Gen, so many existing motherboards work with a simple BIOS update.",
     mistakes: "Buying an old motherboard with an out-of-date BIOS that doesn't yet recognize 14th Gen CPUs, causing the PC to fail to boot until updated.",
     color: "from-blue-600 to-sky-400",
-    image: "/images/components/cpu/intel/i5-14600k.png",
+    image: "/images/components/i5-14600k.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -227,7 +227,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "The extra E-cores on the 14700K compared to the 12700K come almost entirely from more efficiency cores, not more performance cores.",
     mistakes: "Choosing a Micro-ATX motherboard with a weak power delivery (VRM) for this power-hungry CPU, leading to overheating VRMs under sustained load.",
     color: "from-blue-700 to-indigo-500",
-    image: "/images/components/cpu/intel/i7-14700k.png",
+    image: "/images/components/i7-14700k.png",
     renderSvg: cpuIcon(INTEL_BLUE, "Intel", "LGA1700"),
     quiz: [
       {
@@ -267,7 +267,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "AM4 was AMD's mainstream desktop socket for over 6 years (2017-2023), letting people upgrade CPUs for years without changing motherboards.",
     mistakes: "Forgetting that unlike Intel, AMD AM4 CPUs have delicate pins on the CPU itself, not the motherboard — bending them is very easy if mishandled.",
     color: "from-orange-500 to-orange-300",
-    image: "/images/components/cpu/amd/ryzen5-5600x.png",
+    image: "/images/components/ryzen5-5600x.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM4"),
     quiz: [
       {
@@ -306,7 +306,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "The 5800X3D's extra cache chip is physically bonded on top of the CPU cores using advanced 3D-stacking manufacturing, similar to stacking floors of a building.",
     mistakes: "Trying to manually overclock the core frequency, which AMD disabled on X3D chips because the stacked cache is sensitive to excess heat and voltage.",
     color: "from-orange-600 to-red-400",
-    image: "/images/components/cpu/amd/ryzen7-5800x3d.png",
+    image: "/images/components/ryzen7-5800x3d.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM4"),
     quiz: [
       {
@@ -346,7 +346,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "AMD's AM5 platform is their first desktop socket to use LGA (pins on motherboard) rather than PGA (pins on CPU).",
     mistakes: "Forgetting that AM5 motherboards only accept DDR5 RAM, and buying older DDR4 RAM by mistake.",
     color: "from-orange-600 to-orange-400",
-    image: "/images/components/cpu/amd/ryzen5-7600x.png",
+    image: "/images/components/ryzen5-7600x.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM5"),
     quiz: [
       {
@@ -385,7 +385,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "Despite its gaming-focused cache, the 7800X3D also runs notably cooler and more efficiently than AMD's clock-speed-focused flagship chips.",
     mistakes: "Pairing this CPU with slow, budget DDR5 RAM. The 3D V-Cache reduces (but doesn't eliminate) the CPU's sensitivity to RAM speed, so cheap RAM is fine — but users sometimes still overspend expecting huge gains from RAM upgrades.",
     color: "from-orange-600 to-rose-400",
-    image: "/images/components/cpu/amd/ryzen7-7800x3d.png",
+    image: "/images/components/ryzen7-7800x3d.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM5"),
     quiz: [
       {
@@ -425,7 +425,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "AMD has committed to supporting the AM5 socket through multiple CPU generations, so upgrading from a 7000-series to a 9000-series chip often just means a BIOS flash.",
     mistakes: "Assuming any AM5 board automatically supports the newest CPUs without checking — very old AM5 motherboards may need a BIOS update first.",
     color: "from-orange-500 to-amber-300",
-    image: "/images/components/cpu/amd/ryzen5-9600x.png",
+    image: "/images/components/ryzen5-9600x.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM5"),
     quiz: [
       {
@@ -464,7 +464,7 @@ export const cpuComponents: ComponentMetadata[] = [
     facts: "Unlike Intel's P-core/E-core hybrid design, every one of the 9950X's 16 cores is a full-performance core with no efficiency-only cores.",
     mistakes: "Underestimating cooling needs — running this CPU with a basic air cooler in a poorly-ventilated case will cause it to throttle well below its rated speeds.",
     color: "from-orange-700 to-red-500",
-    image: "/images/components/cpu/amd/ryzen9-9950x.png",
+    image: "/images/components/ryzen9-9950x.png",
     renderSvg: cpuIcon(AMD_ORANGE, "AMD", "AM5"),
     quiz: [
       {

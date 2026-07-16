@@ -26,7 +26,7 @@ export const ramComponents: ComponentMetadata[] = [
     facts: "DDR5 operates at much higher speeds and lower voltage than DDR4, and features on-die ECC (Error Correction Code) directly on the chip.",
     mistakes: "Installing RAM into adjacent slots rather than spacing them out (e.g. slots 2 and 4) to enable dual-channel performance.",
     color: "from-purple-600 to-purple-400",
-    image: "/images/components/ram/corsair/vengeance-ddr5-32gb.png",
+    image: "/images/components/vengeance-ddr5-32gb.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="5" y="35" width="90" height="30" rx="3" fill="#1E293B" stroke="#A855F7" strokeWidth="2" />
@@ -73,7 +73,7 @@ export const ramComponents: ComponentMetadata[] = [
     facts: "6000MHz is often called the DDR5 'sweet spot' for AMD Ryzen 7000/9000 CPUs, because it matches the CPU's internal memory controller ratio for the best efficiency.",
     mistakes: "Buying RAM rated far above the motherboard's official supported speed and expecting it to 'just work' at full speed without any BIOS tuning.",
     color: "from-amber-600 to-yellow-400",
-    image: "/images/components/ram/gskill/trident-z5-ddr5-32gb.png",
+    image: "/images/components/trident-z5-ddr5-32gb.png",
     renderSvg: ramIcon(GSKILL_AMBER, "DDR5 32GB", 5),
     quiz: [
       {
@@ -109,7 +109,7 @@ export const ramComponents: ComponentMetadata[] = [
     facts: "DDR4 has been the standard memory form factor since 2014, known for its reliability and excellent power efficiency.",
     mistakes: "Failing to push the RAM stick down firmly until the side locking clips automatically snap shut with a click.",
     color: "from-pink-600 to-pink-400",
-    image: "/images/components/ram/corsair/vengeance-lpx-ddr4-16gb.png",
+    image: "/images/components/vengeance-lpx-ddr4-16gb.png",
     renderSvg: (className = "size-16") => (
       <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="5" y="35" width="90" height="30" rx="3" fill="#1C1917" stroke="#F43F5E" strokeWidth="2" />
@@ -157,7 +157,7 @@ export const ramComponents: ComponentMetadata[] = [
     facts: "Kingston's 'low-profile' heat spreader design helps the RAM fit under large tower air coolers that can overhang the first DIMM slot.",
     mistakes: "Buying tall, heatsink-heavy RAM modules without checking clearance against a large air cooler, causing a physical fitment conflict.",
     color: "from-red-700 to-red-500",
-    image: "/images/components/ram/kingston/fury-beast-ddr4-16gb.png",
+    image: "/images/components/fury-beast-ddr4-16gb.png",
     renderSvg: ramIcon(KINGSTON_RED, "DDR4 16GB", 6),
     quiz: [
       {
