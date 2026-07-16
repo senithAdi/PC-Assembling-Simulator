@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "./ui/button";
@@ -41,6 +41,8 @@ import {
   groupByBrandAndGeneration
 } from "./componentsMetadata";
 import { ComponentImage } from "./ComponentImage";
+import { MotherboardIllustration } from "./MotherboardIllustration";
+import { MOBO_ZONES, rectStyle } from "./data/motherboardLayout";
 
 // Visual placeholder for sound effect
 function triggerPlacementSound() {
@@ -104,30 +106,14 @@ function DraggableComponent({ component, onSelect }: DraggableComponentProps) {
       ref={drag}
       className={`cursor-move transition-all ${isDragging ? 'opacity-40 scale-95' : 'opacity-100'}`}
       onClick={() => onSelect(component)}
+      title={component.name}
     >
       <Card className="backdrop-blur-xl bg-card/80 border-primary/20 hover:shadow-md hover:border-primary/50 transition-all group relative overflow-hidden">
-        <CardContent className="p-3">
-          <div className="flex items-center gap-3">
-            <div className="size-12 shrink-0 rounded-lg bg-slate-900 border border-slate-700/50 flex items-center justify-center p-1.5 group-hover:scale-105 transition-transform">
-              <ComponentImage component={component} className="size-10" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-1">
-                <h4 className="font-semibold text-xs text-foreground truncate">{component.name}</h4>
-                <Badge className="text-[10px] scale-90 px-1 py-0 bg-primary/10 text-primary border-primary/20 shrink-0">
-                  {component.difficulty}
-                </Badge>
-              </div>
-              <p className="text-[10px] text-muted-foreground truncate">{component.description}</p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {Object.entries(component.specs).slice(0, 2).map(([key, val]) => (
-                  <span key={key} className="text-[9px] bg-muted/65 text-muted-foreground px-1 rounded">
-                    {key}: {val}
-                  </span>
-                ))}
-              </div>
-            </div>
+        <CardContent className="p-1.5">
+          <div className="aspect-square rounded-lg bg-slate-900 border border-slate-700/50 flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
+            <ComponentImage component={component} className="size-full" />
           </div>
+          <p className="text-[10px] font-medium text-foreground text-center truncate mt-1">{component.name}</p>
         </CardContent>
       </Card>
     </div>
@@ -142,6 +128,8 @@ interface InteractiveDropZoneProps {
   onDrop: (item: ComponentMetadata) => void;
   compatibilityChecker: (item: ComponentMetadata) => { compatible: boolean; message: string };
   styleClasses: string;
+  /** Precise pixel/percentage position, e.g. from rectStyle(MOBO_ZONES.x). Takes precedence over any position classes in styleClasses. */
+  style?: CSSProperties;
 }
 
 function InteractiveDropZone({
@@ -151,7 +139,8 @@ function InteractiveDropZone({
   activeDragItem,
   onDrop,
   compatibilityChecker,
-  styleClasses
+  styleClasses,
+  style
 }: InteractiveDropZoneProps) {
   const isCorrectType = activeDragItem && activeDragItem.type === acceptType;
   
@@ -178,6 +167,7 @@ function InteractiveDropZone({
   return (
     <div
       ref={drop}
+      style={style}
       className={`absolute flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-300 ${styleClasses} ${
         installedComponent 
           ? 'border-emerald-500/60 bg-emerald-500/5 hover:bg-emerald-500/10' 
@@ -516,51 +506,31 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
     }
   };
 
-  // SVG representation of Motherboard and layout mapping
+  // Socket-accurate motherboard illustration + drop zones (see data/motherboardLayout.ts for the shared coordinates)
   const renderMotherboardMap = () => {
-    const isMoboPlaced = !!installedComponents["Motherboard"];
-    
+    const mobo = installedComponents["Motherboard"];
+    const isMoboPlaced = !!mobo;
+
     return (
       <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
-        {/* Render Motherboard Visual when installed */}
-        {isMoboPlaced ? (
-          <div className="relative size-full">
-            {/* Detailed motherboard tracks drawing */}
-            <svg className="absolute inset-0 size-full pointer-events-none opacity-50" viewBox="0 0 100 100" fill="none">
-              {/* Circular trace highlights */}
-              <circle cx="50" cy="50" r="30" stroke="#3B82F6" strokeWidth="0.5" strokeDasharray="2 4" />
-              <circle cx="50" cy="50" r="45" stroke="#8B5CF6" strokeWidth="0.3" strokeDasharray="1 5" />
-              {/* Gold circuit paths */}
-              <line x1="20" y1="20" x2="50" y2="20" stroke="#FBBF24" strokeWidth="0.3" />
-              <line x1="50" y1="20" x2="60" y2="40" stroke="#FBBF24" strokeWidth="0.3" />
-              <line x1="20" y1="35" x2="80" y2="35" stroke="#4F46E5" strokeWidth="0.4" />
-              <line x1="80" y1="35" x2="80" y2="70" stroke="#4F46E5" strokeWidth="0.4" />
-              <line x1="15" y1="65" x2="85" y2="65" stroke="#10B981" strokeWidth="0.3" />
-              {/* Solder capacitors */}
-              <circle cx="15" cy="15" r="2.5" fill="#4B5563" />
-              <circle cx="15" cy="85" r="2.5" fill="#4B5563" />
-              <circle cx="85" cy="15" r="2.5" fill="#4B5563" />
-              <circle cx="85" cy="85" r="2.5" fill="#4B5563" />
-            </svg>
+        <MotherboardIllustration motherboard={mobo} installed={isMoboPlaced} />
 
-            {/* Rear I/O Panel Visual */}
-            <div className="absolute top-[18%] left-[2%] w-[6%] h-[38%] bg-zinc-800 border border-zinc-600 rounded-sm flex flex-col items-center justify-around py-2">
-              <div className="w-3/4 h-2 bg-blue-600 rounded-sm" title="USB 3.0" />
-              <div className="w-3/4 h-2 bg-zinc-950 rounded-sm" title="USB 2.0" />
-              <div className="w-3/4 h-2 bg-rose-600 rounded-sm" title="Audio Jack" />
-            </div>
+        {!isMoboPlaced && (
+          <InteractiveDropZone
+            label="Mount Motherboard here"
+            acceptType="Motherboard"
+            installedComponent={mobo}
+            activeDragItem={activeDragItem}
+            onDrop={handleDrop}
+            compatibilityChecker={checkCompatibility}
+            styleClasses="border-primary/50 text-base font-medium"
+            style={{ position: "absolute", inset: "6%" }}
+          />
+        )}
 
-            {/* CMOS Battery Visual */}
-            <div className="absolute top-[68%] left-[55%] w-[12%] h-[15%] rounded-full border-4 border-zinc-700 bg-zinc-400 flex items-center justify-center text-[7px] text-zinc-800 font-bold shadow shadow-black">
-              CR2032
-            </div>
-
-            {/* Chipset Heatsink Visual */}
-            <div className="absolute top-[52%] left-[68%] w-[15%] h-[20%] bg-gradient-to-br from-indigo-950 to-indigo-800 border border-indigo-500 rounded flex items-center justify-center p-1 text-[8px] text-indigo-200 font-bold text-center">
-              CHIPSET
-            </div>
-
-            {/* Render 24-Pin ATX Power Slot */}
+        {isMoboPlaced && (
+          <>
+            {/* 24-Pin ATX Power */}
             <InteractiveDropZone
               label="24-Pin"
               acceptType="Cables"
@@ -568,10 +538,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[22%] left-[82%] w-[8%] h-[26%] text-[8px] ${wiggleState === 'Cables' ? 'animate-bounce' : ''}`}
+              styleClasses={`text-[8px] ${wiggleState === 'Cables' ? 'animate-bounce' : ''}`}
+              style={rectStyle(MOBO_ZONES.atxPower)}
             />
 
-            {/* Render 8-Pin CPU Power Slot */}
+            {/* 8-Pin CPU Power */}
             <InteractiveDropZone
               label="CPU Power"
               acceptType="Cables"
@@ -579,10 +550,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[5%] left-[25%] w-[14%] h-[8%] text-[8px]`}
+              styleClasses="text-[8px]"
+              style={rectStyle(MOBO_ZONES.cpuPower)}
             />
 
-            {/* CPU Socket Drop Zone */}
+            {/* CPU Socket */}
             <InteractiveDropZone
               label="CPU Socket"
               acceptType="CPU"
@@ -590,10 +562,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[18%] left-[20%] w-[25%] h-[30%] ${wiggleState === 'CPU' ? 'animate-bounce' : ''}`}
+              styleClasses={wiggleState === 'CPU' ? 'animate-bounce' : ''}
+              style={rectStyle(MOBO_ZONES.cpuSocket)}
             />
 
-            {/* Thermal Paste Drop Zone (only active if CPU installed) */}
+            {/* Thermal Paste (only active once CPU installed) */}
             {installedComponents["CPU"] && (
               <InteractiveDropZone
                 label="Thermal Paste"
@@ -602,11 +575,12 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                 activeDragItem={activeDragItem}
                 onDrop={handleDrop}
                 compatibilityChecker={checkCompatibility}
-                styleClasses={`top-[20%] left-[22%] w-[21%] h-[26%] border-indigo-400 bg-indigo-500/5 ${wiggleState === 'Paste' ? 'animate-bounce' : ''}`}
+                styleClasses={`border-indigo-400 bg-indigo-500/5 ${wiggleState === 'Paste' ? 'animate-bounce' : ''}`}
+                style={rectStyle(MOBO_ZONES.paste)}
               />
             )}
 
-            {/* CPU Cooler Drop Zone (only active if Paste applied) */}
+            {/* CPU Cooler (only active once Paste applied) */}
             {installedComponents["Paste"] && (
               <InteractiveDropZone
                 label="CPU Cooler"
@@ -615,11 +589,12 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                 activeDragItem={activeDragItem}
                 onDrop={handleDrop}
                 compatibilityChecker={checkCompatibility}
-                styleClasses={`top-[15%] left-[16%] w-[33%] h-[36%] border-amber-500 bg-amber-500/5 ${wiggleState === 'Cooler' ? 'animate-bounce' : ''}`}
+                styleClasses={`border-amber-500 bg-amber-500/5 ${wiggleState === 'Cooler' ? 'animate-bounce' : ''}`}
+                style={rectStyle(MOBO_ZONES.cooler)}
               />
             )}
 
-            {/* RAM DIMM Slots Drop Zone */}
+            {/* RAM DIMM Slots */}
             <InteractiveDropZone
               label="RAM Slots"
               acceptType="RAM"
@@ -627,10 +602,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[18%] left-[55%] w-[18%] h-[30%] ${wiggleState === 'RAM' ? 'animate-bounce' : ''}`}
+              styleClasses={wiggleState === 'RAM' ? 'animate-bounce' : ''}
+              style={rectStyle(MOBO_ZONES.ram)}
             />
 
-            {/* PCIe x16 GPU Slot Drop Zone */}
+            {/* PCIe x16 GPU Slot */}
             <InteractiveDropZone
               label="PCIe x16 Slot (GPU)"
               acceptType="GPU"
@@ -638,10 +614,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[55%] left-[15%] w-[50%] h-[12%] ${wiggleState === 'GPU' ? 'animate-bounce' : ''}`}
+              styleClasses={wiggleState === 'GPU' ? 'animate-bounce' : ''}
+              style={rectStyle(MOBO_ZONES.pcieX16)}
             />
 
-            {/* M.2 SSD Slot Drop Zone */}
+            {/* M.2 NVMe SSD Slot */}
             <InteractiveDropZone
               label="M.2 NVMe SSD"
               acceptType="SSD"
@@ -649,7 +626,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[48%] left-[20%] w-[20%] h-[6%] text-[8px] ${wiggleState === 'SSD' ? 'animate-bounce' : ''}`}
+              styleClasses={`text-[8px] ${wiggleState === 'SSD' ? 'animate-bounce' : ''}`}
+              style={rectStyle(MOBO_ZONES.m2)}
             />
 
             {/* PCIe x1 slot 1 - Network Card */}
@@ -660,7 +638,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[72%] left-[15%] w-[35%] h-[8%] text-[8px]`}
+              styleClasses="text-[8px]"
+              style={rectStyle(MOBO_ZONES.pcieX1Net)}
             />
 
             {/* PCIe x1 slot 2 - Sound Card */}
@@ -671,22 +650,10 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               activeDragItem={activeDragItem}
               onDrop={handleDrop}
               compatibilityChecker={checkCompatibility}
-              styleClasses={`top-[82%] left-[15%] w-[35%] h-[8%] text-[8px]`}
+              styleClasses="text-[8px]"
+              style={rectStyle(MOBO_ZONES.pcieX1Snd)}
             />
-          </div>
-        ) : (
-          /* Empty Case Mounting Box */
-          <div className="size-full flex flex-col items-center justify-center p-8 bg-slate-900 border border-slate-700/50">
-            <InteractiveDropZone
-              label="Mount Motherboard here"
-              acceptType="Motherboard"
-              installedComponent={installedComponents["Motherboard"]}
-              activeDragItem={activeDragItem}
-              onDrop={handleDrop}
-              compatibilityChecker={checkCompatibility}
-              styleClasses="top-[10%] left-[10%] w-[80%] h-[80%] border-primary/50 text-base font-medium"
-            />
-          </div>
+          </>
         )}
       </div>
     );
@@ -772,9 +739,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
 
                   <ScrollArea className="h-[500px] pr-2">
                     {trimmedSearch ? (
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {searchResults.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-6">No parts match "{searchQuery}".</p>
+                          <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
                         )}
                         {searchResults.map(comp => (
                           <DraggableComponent
@@ -803,7 +770,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                                         {generation}
                                       </p>
                                     )}
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                       {models.map(comp => (
                                         <DraggableComponent
                                           key={comp.id}
