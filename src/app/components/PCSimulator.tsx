@@ -670,7 +670,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
     // Empty chassis — prompt to mount a motherboard first
     if (!isMoboPlaced) {
       return (
-        <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
+        <div className="relative w-full max-w-[780px] mx-auto h-[60vh] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
           <MotherboardIllustration motherboard={mobo} installed={false} />
           <InteractiveDropZone
             label="Mount Motherboard here"
@@ -687,24 +687,29 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
     }
 
     // Real motherboard photo as the board — drop zones overlaid on top of it.
+    // The board is capped to the viewport height so the whole motherboard is
+    // visible at once. The inner wrapper is sized to the photo (w-fit) so the
+    // percentage-based drop zones stay pixel-aligned to the image.
     if (showPhoto) {
       return (
-        <div className="relative w-full bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner">
-          <img
-            src={mobo.image}
-            alt={mobo.name}
-            draggable={false}
-            onError={() => setMoboImageFailed(true)}
-            className="w-full h-auto block select-none pointer-events-none"
-          />
-          {dropZones}
+        <div className="flex justify-center bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner p-2">
+          <div className="relative w-fit max-w-full">
+            <img
+              src={mobo.image}
+              alt={mobo.name}
+              draggable={false}
+              onError={() => setMoboImageFailed(true)}
+              className="block max-h-[64vh] w-auto max-w-full select-none pointer-events-none"
+            />
+            {dropZones}
+          </div>
         </div>
       );
     }
 
     // Mounted board without a usable photo — fall back to the drawn illustration.
     return (
-      <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
+      <div className="relative w-full max-w-[780px] mx-auto h-[60vh] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
         <MotherboardIllustration motherboard={mobo} installed />
         {dropZones}
       </div>
@@ -713,9 +718,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         {/* Navbar */}
-        <nav className="border-b border-border/50 backdrop-blur-xl bg-card/50 sticky top-0 z-50">
+        <nav className="border-b border-border/50 backdrop-blur-xl bg-card/50 shrink-0 z-50">
           <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')}>
@@ -752,11 +757,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
           </div>
         </nav>
 
-        {/* Main Body */}
-        <div className="max-w-[1800px] mx-auto px-6 py-6 space-y-6">
+        {/* Main Body — fills the viewport; columns scroll internally so the page itself doesn't scroll */}
+        <div className="flex-1 min-h-0 w-full max-w-[1800px] mx-auto px-6 py-4 flex flex-col gap-4">
 
           {/* Educational Progress — compact full-width strip on top */}
-          <Card className="backdrop-blur-xl bg-gradient-to-r from-indigo-900 to-indigo-800 border-0 text-white shadow-xl">
+          <Card className="backdrop-blur-xl bg-gradient-to-r from-indigo-900 to-indigo-800 border-0 text-white shadow-xl shrink-0">
             <CardContent className="p-3 flex items-center gap-5 flex-wrap">
               <div className="flex items-center gap-2 shrink-0">
                 <Trophy className="size-5 text-yellow-400" />
@@ -787,16 +792,16 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
 
             {/* Column 1: Components Library */}
-            <div className="col-span-1">
-              <Card className="backdrop-blur-xl bg-card/80 border-primary/20 sticky top-24">
-                <CardHeader className="pb-3">
+            <div className="col-span-1 min-h-0">
+              <Card className="backdrop-blur-xl bg-card/80 border-primary/20 h-full flex flex-col overflow-hidden">
+                <CardHeader className="pb-3 shrink-0">
                   <CardTitle className="text-lg">Component Registry</CardTitle>
                   <CardDescription>Drag components to build slots</CardDescription>
                 </CardHeader>
-                <CardContent className="px-3 pb-4 space-y-3">
+                <CardContent className="px-3 pb-4 space-y-3 flex-1 min-h-0 flex flex-col">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input
@@ -808,7 +813,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   </div>
 
                   {trimmedSearch ? (
-                    <ScrollArea className="h-[600px] pr-2">
+                    <ScrollArea className="flex-1 min-h-0 pr-2">
                       <div className="grid grid-cols-3 gap-2">
                         {searchResults.length === 0 && (
                           <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
@@ -823,9 +828,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-1 min-h-0">
                       {/* Vertical component-type tab rail */}
-                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0">
+                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0 overflow-y-auto">
                         {CATEGORY_GROUPS.map(group => {
                           const tab = CATEGORY_TABS[group.id];
                           const Icon = tab?.icon ?? Box;
@@ -851,7 +856,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                       </div>
 
                       {/* Cards for the selected component type */}
-                      <ScrollArea className="h-[600px] flex-1 pr-2">
+                      <ScrollArea className="h-full flex-1 pr-2">
                         <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
                           {brandGroups.map(({ brand, generations }) => (
                             <AccordionItem key={brand} value={brand} className="border-primary/10">
@@ -893,9 +898,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               </Card>
             </div>
 
-            {/* Column 2 & 3: Visual Build Area & AI Suggestions */}
-            <div className="col-span-2 space-y-6">
-              
+            {/* Column 2 & 3: Visual Build Area & AI Suggestions — scrolls internally */}
+            <div className="col-span-2 min-h-0 overflow-y-auto space-y-6 pr-1">
+
               {/* Build Map Display */}
               <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
                 <CardHeader className="pb-2">
@@ -909,7 +914,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-4">
                   {renderMotherboardMap()}
                 </CardContent>
               </Card>
