@@ -30,8 +30,9 @@ export function setCurrentUser(user: User) {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+// MongoDB document ids are strings (ObjectId serialized to string).
 export interface User {
-  user_id: number;
+  user_id: string;
   username: string;
   email: string;
   level: number;
@@ -41,7 +42,7 @@ export interface User {
 }
 
 export interface Build {
-  build_id: number;
+  build_id: string;
   build_name: string;
   completion_status: string;
   score: number;
@@ -62,21 +63,12 @@ export interface BuildComponent {
 }
 
 export interface Achievement {
-  achievement_id: number;
+  achievement_id: string;
   title: string;
   description: string;
   xp_reward: number;
   badge_image: string | null;
   unlocked_at?: string;
-}
-
-export interface QuizQuestion {
-  quiz_id: number;
-  question: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
 }
 
 // ─── Core fetch wrapper ───────────────────────────────────────────────────────
@@ -137,11 +129,11 @@ export const authApi = {
 
 // ─── User API ─────────────────────────────────────────────────────────────────
 export const userApi = {
-  async getProfile(userId: number) {
+  async getProfile(userId: string) {
     return apiFetch<User>(`/users/${userId}`);
   },
 
-  async awardXp(userId: number, xpToAdd: number) {
+  async awardXp(userId: string, xpToAdd: number) {
     return apiFetch<{ user: User; leveledUp: boolean }>(`/users/${userId}/xp`, {
       method: 'PATCH',
       body: JSON.stringify({ xp_to_add: xpToAdd }),
@@ -151,18 +143,24 @@ export const userApi = {
 
 // ─── Builds API ───────────────────────────────────────────────────────────────
 export const buildsApi = {
-  async getBuilds(userId: number) {
+  async getBuilds(userId: string) {
     return apiFetch<Build[]>(`/builds?userId=${userId}`);
   },
 
   async saveBuild(data: {
     build_name: string;
-    scenario_id?: number;
+    scenario_id?: string;
+    scenario_title?: string;
+    difficulty?: string;
     completion_status?: string;
     score?: number;
     completion_time?: number;
     components?: Array<{
-      component_id: number;
+      component_id: string;
+      component_name?: string;
+      category?: string;
+      manufacturer?: string;
+      model?: string;
       motherboard_slot: string;
       correctly_installed?: boolean;
     }>;
@@ -173,42 +171,23 @@ export const buildsApi = {
     });
   },
 
-  async deleteBuild(buildId: number) {
+  async deleteBuild(buildId: string) {
     return apiFetch<{ message: string }>(`/builds/${buildId}`, {
       method: 'DELETE',
     });
   },
 };
 
-// ─── Quiz API ─────────────────────────────────────────────────────────────────
-export const quizApi = {
-  async getQuestions(category: string) {
-    return apiFetch<QuizQuestion[]>(`/quiz/${category}`);
-  },
-
-  async submitAnswer(quizId: number, selectedAnswer: string) {
-    return apiFetch<{
-      isCorrect: boolean;
-      xp_earned: number;
-      correct_answer: string;
-      explanation: string;
-    }>('/quiz/answer', {
-      method: 'POST',
-      body: JSON.stringify({ quiz_id: quizId, selected_answer: selectedAnswer }),
-    });
-  },
-};
-
 // ─── Achievements API ─────────────────────────────────────────────────────────
 export const achievementsApi = {
-  async getUserAchievements(userId: number) {
+  async getUserAchievements(userId: string) {
     return apiFetch<Achievement[]>(`/achievements/${userId}`);
   },
 
-  async unlockAchievement(achievementId: number) {
+  async unlockAchievement(achievementCode: string) {
     return apiFetch<{ unlocked: boolean; achievement: Achievement }>('/achievements/unlock', {
       method: 'POST',
-      body: JSON.stringify({ achievement_id: achievementId }),
+      body: JSON.stringify({ achievement_id: achievementCode }),
     });
   },
 };
