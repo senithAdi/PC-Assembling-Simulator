@@ -713,9 +713,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         {/* Navbar */}
-        <nav className="border-b border-border/50 backdrop-blur-xl bg-card/50 sticky top-0 z-50">
+        <nav className="border-b border-border/50 backdrop-blur-xl bg-card/50 shrink-0 z-50">
           <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')}>
@@ -752,51 +752,50 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
           </div>
         </nav>
 
-        {/* Main Body */}
-        <div className="max-w-[1800px] mx-auto px-6 py-6 space-y-6">
+        {/* Main Body — fills the viewport; columns scroll internally so the page itself doesn't scroll */}
+        <div className="flex-1 min-h-0 w-full max-w-[1800px] mx-auto px-6 py-4">
 
-          {/* Educational Progress — compact full-width strip on top */}
-          <Card className="backdrop-blur-xl bg-gradient-to-r from-indigo-900 to-indigo-800 border-0 text-white shadow-xl">
-            <CardContent className="p-3 flex items-center gap-5 flex-wrap">
-              <div className="flex items-center gap-2 shrink-0">
-                <Trophy className="size-5 text-yellow-400" />
-                <span className="text-sm font-semibold">Educational Progress</span>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
-                  <span className="text-lg font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
-                  <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
-                </div>
-                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
-                  <span className="text-lg font-bold text-pink-300 block leading-none">{level}</span>
-                  <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
-                </div>
-                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
-                  <span className="text-lg font-bold text-purple-300 block leading-none">{xp}</span>
-                  <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
-                </div>
-                <div className="text-center px-3 py-1 bg-white/5 rounded-md">
-                  <span className="text-lg font-bold text-emerald-300 block leading-none">{accuracy}%</span>
-                  <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-                <span className="text-[10px] opacity-80 whitespace-nowrap">XP {xp} / {level * 300}</span>
-                <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10 flex-1" />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-3 gap-6 h-full min-h-0">
 
-          <div className="grid grid-cols-3 gap-6">
+            {/* Column 1: Educational Progress (small card) + Components Library */}
+            <div className="col-span-1 min-h-0 flex flex-col gap-4">
 
-            {/* Column 1: Components Library */}
-            <div className="col-span-1">
-              <Card className="backdrop-blur-xl bg-card/80 border-primary/20 sticky top-24">
-                <CardHeader className="pb-3">
+              {/* Educational Progress — small card on the left */}
+              <Card className="backdrop-blur-xl bg-gradient-to-br from-indigo-900 to-indigo-800 border-0 text-white shadow-lg shrink-0">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="size-4 text-yellow-400" />
+                    <span className="text-sm font-semibold">Educational Progress</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 text-center">
+                    <div className="py-1 bg-white/5 rounded-md">
+                      <span className="text-base font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
+                    </div>
+                    <div className="py-1 bg-white/5 rounded-md">
+                      <span className="text-base font-bold text-pink-300 block leading-none">{level}</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
+                    </div>
+                    <div className="py-1 bg-white/5 rounded-md">
+                      <span className="text-base font-bold text-purple-300 block leading-none">{xp}</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
+                    </div>
+                    <div className="py-1 bg-white/5 rounded-md">
+                      <span className="text-base font-bold text-emerald-300 block leading-none">{accuracy}%</span>
+                      <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
+                    </div>
+                  </div>
+                  <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10" />
+                </CardContent>
+              </Card>
+
+              {/* Component Registry — fills remaining height and scrolls internally */}
+              <Card className="backdrop-blur-xl bg-card/80 border-primary/20 flex-1 min-h-0 flex flex-col overflow-hidden">
+                <CardHeader className="pb-3 shrink-0">
                   <CardTitle className="text-lg">Component Registry</CardTitle>
                   <CardDescription>Drag components to build slots</CardDescription>
                 </CardHeader>
-                <CardContent className="px-3 pb-4 space-y-3">
+                <CardContent className="px-3 pb-4 space-y-3 flex-1 min-h-0 flex flex-col">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input
@@ -808,7 +807,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                   </div>
 
                   {trimmedSearch ? (
-                    <ScrollArea className="h-[600px] pr-2">
+                    <ScrollArea className="flex-1 min-h-0 pr-2">
                       <div className="grid grid-cols-3 gap-2">
                         {searchResults.length === 0 && (
                           <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
@@ -823,9 +822,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-1 min-h-0">
                       {/* Vertical component-type tab rail */}
-                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0">
+                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0 overflow-y-auto">
                         {CATEGORY_GROUPS.map(group => {
                           const tab = CATEGORY_TABS[group.id];
                           const Icon = tab?.icon ?? Box;
@@ -851,7 +850,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                       </div>
 
                       {/* Cards for the selected component type */}
-                      <ScrollArea className="h-[600px] flex-1 pr-2">
+                      <ScrollArea className="h-full flex-1 pr-2">
                         <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
                           {brandGroups.map(({ brand, generations }) => (
                             <AccordionItem key={brand} value={brand} className="border-primary/10">
@@ -893,8 +892,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
               </Card>
             </div>
 
-            {/* Column 2 & 3: Visual Build Area & AI Suggestions */}
-            <div className="col-span-2 space-y-6">
+            {/* Column 2 & 3: Visual Build Area & AI Suggestions — scrolls internally */}
+            <div className="col-span-2 min-h-0 overflow-y-auto space-y-6 pr-1">
               
               {/* Build Map Display */}
               <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
