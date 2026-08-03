@@ -33,6 +33,8 @@ import {
   MonitorPlay,
   Plug,
   Package,
+  X,
+  ShieldCheck,
   type LucideIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -49,18 +51,46 @@ import { ComponentImage } from "./ComponentImage";
 import { MotherboardIllustration } from "./MotherboardIllustration";
 import { rectStyle, getBoardZones } from "./data/motherboardLayout";
 
-// Icon + short label for each component-type tab in the registry rail
+// Icon + label for each component-type tab in the registry's horizontal tab bar.
+// Labels are written out in full — students pick a component type first, then browse
+// the models listed underneath, so a truncated "Board" or "Store" is not good enough.
 const CATEGORY_TABS: Record<string, { icon: LucideIcon; short: string }> = {
   cpu: { icon: Cpu, short: "CPU" },
-  motherboard: { icon: CircuitBoard, short: "Board" },
+  motherboard: { icon: CircuitBoard, short: "Motherboard" },
   ram: { icon: MemoryStick, short: "RAM" },
   gpu: { icon: MonitorPlay, short: "GPU" },
-  storage: { icon: HardDrive, short: "Store" },
-  psu: { icon: Plug, short: "PSU" },
-  cooling: { icon: Fan, short: "Cool" },
+  storage: { icon: HardDrive, short: "Storage" },
+  psu: { icon: Plug, short: "Power Supply" },
+  cooling: { icon: Fan, short: "Cooling & Fans" },
   case: { icon: Box, short: "Case" },
-  other: { icon: Package, short: "Other" }
+  other: { icon: Package, short: "Other Parts" }
 };
+
+/**
+ * Which already-installed parts stop making physical sense once a given part is
+ * pulled back out. Applied transitively, so removing the motherboard also takes
+ * the CPU with it, which in turn takes the thermal paste and the cooler.
+ */
+const REMOVAL_DEPENDENTS: Record<string, string[]> = {
+  Motherboard: ["CPU", "RAM", "GPU", "SSD", "Network", "Sound", "Cables"],
+  CPU: ["Paste"],
+  Paste: ["Cooler"]
+};
+
+/** Returns `type` plus every installed part that transitively depends on it. */
+function collectRemovalChain(type: string, installed: Record<string, ComponentMetadata>): string[] {
+  const chain: string[] = [];
+  const visit = (current: string) => {
+    if (chain.includes(current)) return;
+    if (current !== type && !installed[current]) return;
+    chain.push(current);
+    for (const dependent of REMOVAL_DEPENDENTS[current] ?? []) {
+      visit(dependent);
+    }
+  };
+  visit(type);
+  return chain;
+}
 
 // Visual placeholder for sound effect
 function triggerPlacementSound() {
@@ -108,16 +138,21 @@ function triggerErrorSound() {
 interface DraggableComponentProps {
   component: ComponentMetadata;
   onSelect: (comp: ComponentMetadata) => void;
+  onDragStateChange: (comp: ComponentMetadata | null) => void;
 }
 
-function DraggableComponent({ component, onSelect }: DraggableComponentProps) {
+function DraggableComponent({ component, onSelect, onDragStateChange }: DraggableComponentProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'component',
-    item: component,
+    item: () => {
+      onDragStateChange(component);
+      return component;
+    },
+    end: () => onDragStateChange(null),
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     })
-  }));
+  }), [component, onDragStateChange]);
 
   return (
     <div
@@ -127,11 +162,14 @@ function DraggableComponent({ component, onSelect }: DraggableComponentProps) {
       title={component.name}
     >
       <Card className="backdrop-blur-xl bg-card/80 border-primary/20 hover:shadow-md hover:border-primary/50 transition-all group relative overflow-hidden">
-        <CardContent className="p-1.5">
+        <CardContent className="p-2">
           <div className="aspect-square rounded-lg bg-slate-900 border border-slate-700/50 flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
             <ComponentImage component={component} className="size-full" />
           </div>
-          <p className="text-[10px] font-medium text-foreground text-center truncate mt-1">{component.name}</p>
+          {/* Two lines so full part names like "ASUS Prime Z790-A" stay readable */}
+          <p className="text-[11px] font-medium text-foreground text-center leading-snug mt-1.5 line-clamp-2 min-h-[2.2em]">
+            {component.name}
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -148,6 +186,12 @@ interface InteractiveDropZoneProps {
   styleClasses: string;
   /** Precise pixel/percentage position, e.g. from rectStyle(MOBO_ZONES.x). Takes precedence over any position classes in styleClasses. */
   style?: CSSProperties;
+  /** Uninstalls the mounted part. When omitted the slot is not removable. */
+  onRemove?: () => void;
+  /** Opens the mounted part in the Educational Info Panel. */
+  onInspect?: (comp: ComponentMetadata) => void;
+  /** True right after an incompatible part was dropped here — flashes the red cross. */
+  rejected?: boolean;
 }
 
 function InteractiveDropZone({
@@ -158,17 +202,17 @@ function InteractiveDropZone({
   onDrop,
   compatibilityChecker,
   styleClasses,
-  style
+  style,
+  onRemove,
+  onInspect,
+  rejected = false
 }: InteractiveDropZoneProps) {
   const isCorrectType = activeDragItem && activeDragItem.type === acceptType;
-  
+
   // Check compatibility dynamically on hover
   let isHoverCompatible = true;
-  let hoverMessage = "";
   if (isCorrectType && activeDragItem) {
-    const check = compatibilityChecker(activeDragItem);
-    isHoverCompatible = check.compatible;
-    hoverMessage = check.message;
+    isHoverCompatible = compatibilityChecker(activeDragItem).compatible;
   }
 
   const [{ isOver }, drop] = useDrop(() => ({
@@ -182,42 +226,67 @@ function InteractiveDropZone({
     })
   }), [acceptType, compatibilityChecker, onDrop]);
 
+  // The red cross marks the slot as "this part does not belong here": live while an
+  // incompatible part hovers over it, then again for a moment after a failed drop.
+  const showCross = !installedComponent && ((isOver && isCorrectType && !isHoverCompatible) || rejected);
+
   return (
     <div
       ref={drop}
       style={style}
       className={`absolute flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-300 ${styleClasses} ${
-        installedComponent 
-          ? 'border-emerald-500/60 bg-emerald-500/5 hover:bg-emerald-500/10' 
-          : isOver && isCorrectType
-            ? isHoverCompatible 
+        installedComponent
+          ? 'border-emerald-500/60 bg-emerald-500/5 hover:bg-emerald-500/10'
+          : showCross
+            ? 'border-rose-500 bg-rose-500/25 shadow-lg z-20'
+            : isOver && isCorrectType
               ? 'border-emerald-400 bg-emerald-400/20 shadow-lg scale-105 z-20 animate-pulse'
-              : 'border-rose-500 bg-rose-500/20 shadow-lg scale-105 z-20 animate-bounce'
-            : isCorrectType
-              ? 'border-sky-400 bg-sky-400/5 animate-pulse border-solid'
-              : 'border-slate-600/40 hover:border-slate-500/80 bg-slate-950/20'
+              : isCorrectType
+                ? 'border-sky-400 bg-sky-400/5 animate-pulse border-solid'
+                : 'border-slate-600/40 hover:border-slate-500/80 bg-slate-950/20'
       }`}
-      title={installedComponent ? `Installed: ${installedComponent.name}` : `Place ${acceptType} here`}
+      title={installedComponent ? `Installed: ${installedComponent.name} — click to study, ✕ to remove` : `Place ${acceptType} here`}
     >
       {installedComponent ? (
         <div className="size-full flex flex-col items-center justify-center p-1 relative group">
-          <div className="size-5/6 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => onInspect?.(installedComponent)}
+            className="size-5/6 flex items-center justify-center cursor-pointer"
+            title={`Study ${installedComponent.name}`}
+          >
             <ComponentImage component={installedComponent} className="size-full max-h-full object-contain" />
-          </div>
-          <span className="absolute bottom-1 bg-emerald-950/90 text-emerald-300 border border-emerald-500/30 px-1 py-0.5 rounded text-[8px] max-w-[90%] truncate font-medium">
+          </button>
+          <span className="absolute bottom-1 bg-emerald-950/90 text-emerald-300 border border-emerald-500/30 px-1 py-0.5 rounded text-[8px] max-w-[90%] truncate font-medium pointer-events-none">
             {installedComponent.model}
           </span>
+          {onRemove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              title={`Remove ${installedComponent.name}`}
+              aria-label={`Remove ${installedComponent.name}`}
+              className="absolute -top-2 -right-2 z-30 size-5 rounded-full bg-rose-600 hover:bg-rose-500 text-white border border-rose-300/60 shadow-md flex items-center justify-center opacity-80 hover:opacity-100 hover:scale-110 transition-all"
+            >
+              <X className="size-3" strokeWidth={3} />
+            </button>
+          )}
         </div>
       ) : (
         <div className="text-center p-1 pointer-events-none">
-          <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider text-muted-foreground">
+          <p className={`text-[10px] font-bold uppercase tracking-wider ${showCross ? 'opacity-0' : 'opacity-80 text-muted-foreground'}`}>
             {label}
           </p>
-          {isOver && isCorrectType && !isHoverCompatible && (
-            <span className="text-[8px] text-rose-400 font-bold block max-w-[120px] leading-tight">
-              Incompatible!
-            </span>
-          )}
+        </div>
+      )}
+
+      {/* Not-compatible marker — a big red cross straight over the slot */}
+      {showCross && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <X className="w-2/3 h-2/3 max-w-[64px] max-h-[64px] text-rose-500 drop-shadow-[0_0_6px_rgba(0,0,0,0.6)]" strokeWidth={3} />
         </div>
       )}
     </div>
@@ -249,6 +318,12 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   // AI Tutor & Notifications
   const [aiTutorMessage, setAiTutorMessage] = useState("Welcome to the simulator! Let's start by dragging and mounting the Motherboard into the Case tray.");
   const [compatibilityError, setCompatibilityError] = useState<string | null>(null);
+  /** Blocking pop-up shown the moment an incompatible part is dropped. */
+  const [compatibilityAlert, setCompatibilityAlert] = useState<{ component: ComponentMetadata; message: string } | null>(null);
+  /** Transient banner for successful placements/removals — auto-dismisses. */
+  const [statusToast, setStatusToast] = useState<{ tone: "success" | "info"; title: string; detail: string } | null>(null);
+  /** Component type whose slot should flash the red "not compatible" cross. */
+  const [rejectedSlot, setRejectedSlot] = useState<string | null>(null);
   const [wiggleState, setWiggleState] = useState<string | null>(null); // For shakes
   const [isBooted, setIsBooted] = useState(false);
   const [showBootModal, setShowBootModal] = useState(false);
@@ -261,6 +336,30 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   useEffect(() => {
     setMoboImageFailed(false);
   }, [mountedMoboId]);
+
+  // Auto-dismiss the success/info toast
+  useEffect(() => {
+    if (!statusToast) return;
+    const timer = setTimeout(() => setStatusToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [statusToast]);
+
+  // Clear the red cross a moment after a rejected drop
+  useEffect(() => {
+    if (!rejectedSlot) return;
+    const timer = setTimeout(() => setRejectedSlot(null), 2600);
+    return () => clearTimeout(timer);
+  }, [rejectedSlot]);
+
+  // Escape closes the compatibility pop-up
+  useEffect(() => {
+    if (!compatibilityAlert) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCompatibilityAlert(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [compatibilityAlert]);
 
   // Keep track of level threshold
   useEffect(() => {
@@ -304,7 +403,11 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
   const handleSelectScenario = (sc: BuildScenario | null) => {
     setSelectedScenario(sc);
     setInstalledComponents({});
-    setAiTutorMessage(sc 
+    setCompatibilityError(null);
+    setCompatibilityAlert(null);
+    setRejectedSlot(null);
+    setStatusToast(null);
+    setAiTutorMessage(sc
       ? `Scenario: ${sc.title} selected! Review the objectives on the right, then select and mount the Motherboard.`
       : "Free build mode selected! Build any custom computer configuration."
     );
@@ -412,7 +515,13 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
       setXp(prev => prev + 50);
       setAiTutorMessage(`Great choice! The ${item.name} has been successfully mounted. Let's study its functionality.`);
       setCompatibilityError(null);
+      setRejectedSlot(null);
       setHighlightedComponent(item);
+      setStatusToast({
+        tone: "success",
+        title: `${item.type} installed`,
+        detail: `${item.name} fits this system. +50 XP`
+      });
       triggerPlacementSound();
       triggerConfetti();
 
@@ -422,20 +531,67 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
       // Quizzes are optional now — students open them via the "Take Quiz" button
       // in the Educational Info Panel instead of an automatic interruption.
     } else {
-      // Incompatible placement
+      // Incompatible placement — cross the slot out and explain why in a pop-up
+      // the student cannot miss, rather than in a panel further down the page.
       setWiggleState(item.type);
+      setRejectedSlot(item.type);
       setMistakes(prev => prev + 1);
       setScore(prev => Math.max(0, prev - 20));
       setXp(prev => Math.max(0, prev - 10));
       setCompatibilityError(check.message);
+      setCompatibilityAlert({ component: item, message: check.message });
+      setStatusToast(null);
       setAiTutorMessage(`Placement Error: ${check.message}`);
       triggerErrorSound();
-      
+
       // Reset wiggle animation state
       setTimeout(() => {
         setWiggleState(null);
       }, 1000);
     }
+  };
+
+  /**
+   * Uninstalls a mounted part so the student can try a different one. Anything
+   * that physically sits on top of it comes off too (removing the CPU also takes
+   * the thermal paste and cooler), and the XP awarded for each removed part is
+   * handed back so replacing a component cannot be farmed for points.
+   */
+  const handleRemoveComponent = (type: string) => {
+    const chain = collectRemovalChain(type, installedComponents);
+    if (chain.length === 0 || !installedComponents[type]) return;
+
+    const removedName = installedComponents[type].name;
+    const alsoRemoved = chain
+      .slice(1)
+      .map(t => installedComponents[t]?.name)
+      .filter((n): n is string => !!n);
+
+    setInstalledComponents(prev => {
+      const next = { ...prev };
+      for (const t of chain) delete next[t];
+      return next;
+    });
+
+    // Hand back what placing these parts earned (never below zero). Accuracy is
+    // left alone — the original placement really was correct.
+    setScore(prev => Math.max(0, prev - 50 * chain.length));
+    setXp(prev => Math.max(0, prev - 50 * chain.length));
+
+    setIsBooted(false);
+    setCompatibilityError(null);
+    setRejectedSlot(null);
+    setHighlightedComponent(installedComponents[type]);
+
+    const detail = alsoRemoved.length
+      ? `${removedName} removed. ${alsoRemoved.join(" and ")} had to come off with it.`
+      : `${removedName} removed. The slot is free again — drag in a different part.`;
+    setStatusToast({ tone: "info", title: `${type} removed`, detail });
+    setAiTutorMessage(
+      alsoRemoved.length
+        ? `You removed the ${removedName}. Because ${alsoRemoved.join(" and ")} mount on top of it, those came off too — that is the real disassembly order.`
+        : `You removed the ${removedName}. Pick another ${type.toLowerCase()} and drop it into the empty slot.`
+    );
   };
 
   const checkAchievementsUnlocked = (placedType: string) => {
@@ -531,6 +687,33 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
     }
   };
 
+  /** Props every drop zone shares: what it holds, how to remove it, whether it is crossed out. */
+  const slotProps = (acceptType: string) => ({
+    acceptType,
+    installedComponent: installedComponents[acceptType],
+    activeDragItem,
+    onDrop: handleDrop,
+    compatibilityChecker: checkCompatibility,
+    onRemove: () => handleRemoveComponent(acceptType),
+    onInspect: setHighlightedComponent,
+    rejected: rejectedSlot === acceptType
+  });
+
+  /** One labelled chassis bay (PSU chamber, drive cage, fan bracket, …). */
+  const renderBay = (title: string, type: string, label: string) => (
+    <div className="relative p-3 border border-dashed border-slate-700 rounded-lg flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h6 className="text-xs font-semibold">{title}</h6>
+        <p className="text-[10px] text-muted-foreground truncate">
+          {installedComponents[type]?.name ?? "Empty"}
+        </p>
+      </div>
+      <div className="w-[100px] h-[50px] relative shrink-0">
+        <InteractiveDropZone label={label} {...slotProps(type)} styleClasses="inset-0 text-[10px]" />
+      </div>
+    </div>
+  );
+
   // Real motherboard photo (or SVG fallback) with drop zones overlaid on the board.
   // Zone coordinates come from getBoardZones() so they can be tuned per board — see data/motherboardLayout.ts.
   const renderMotherboardMap = () => {
@@ -544,11 +727,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* 24-Pin ATX Power */}
         <InteractiveDropZone
           label="24-Pin"
-          acceptType="Cables"
-          installedComponent={installedComponents["Cables"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("Cables")}
           styleClasses={`text-[8px] ${wiggleState === 'Cables' ? 'animate-bounce' : ''}`}
           style={rectStyle(zones.atxPower)}
         />
@@ -556,11 +735,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* 8-Pin CPU Power */}
         <InteractiveDropZone
           label="CPU Power"
-          acceptType="Cables"
-          installedComponent={installedComponents["Cables"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("Cables")}
           styleClasses="text-[8px]"
           style={rectStyle(zones.cpuPower)}
         />
@@ -568,11 +743,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* CPU Socket */}
         <InteractiveDropZone
           label="CPU Socket"
-          acceptType="CPU"
-          installedComponent={installedComponents["CPU"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("CPU")}
           styleClasses={wiggleState === 'CPU' ? 'animate-bounce' : ''}
           style={rectStyle(zones.cpuSocket)}
         />
@@ -581,11 +752,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {installedComponents["CPU"] && (
           <InteractiveDropZone
             label="Thermal Paste"
-            acceptType="Paste"
-            installedComponent={installedComponents["Paste"]}
-            activeDragItem={activeDragItem}
-            onDrop={handleDrop}
-            compatibilityChecker={checkCompatibility}
+            {...slotProps("Paste")}
             styleClasses={`border-indigo-400 bg-indigo-500/10 ${wiggleState === 'Paste' ? 'animate-bounce' : ''}`}
             style={rectStyle(zones.paste)}
           />
@@ -595,11 +762,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {installedComponents["Paste"] && (
           <InteractiveDropZone
             label="CPU Cooler"
-            acceptType="Cooler"
-            installedComponent={installedComponents["Cooler"]}
-            activeDragItem={activeDragItem}
-            onDrop={handleDrop}
-            compatibilityChecker={checkCompatibility}
+            {...slotProps("Cooler")}
             styleClasses={`border-amber-500 bg-amber-500/10 ${wiggleState === 'Cooler' ? 'animate-bounce' : ''}`}
             style={rectStyle(zones.cooler)}
           />
@@ -608,11 +771,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* RAM DIMM Slots */}
         <InteractiveDropZone
           label="RAM Slots"
-          acceptType="RAM"
-          installedComponent={installedComponents["RAM"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("RAM")}
           styleClasses={wiggleState === 'RAM' ? 'animate-bounce' : ''}
           style={rectStyle(zones.ram)}
         />
@@ -620,11 +779,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* PCIe x16 GPU Slot */}
         <InteractiveDropZone
           label="PCIe x16 (GPU)"
-          acceptType="GPU"
-          installedComponent={installedComponents["GPU"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("GPU")}
           styleClasses={wiggleState === 'GPU' ? 'animate-bounce' : ''}
           style={rectStyle(zones.pcieX16)}
         />
@@ -632,11 +787,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* M.2 NVMe SSD Slot */}
         <InteractiveDropZone
           label="M.2 SSD"
-          acceptType="SSD"
-          installedComponent={installedComponents["SSD"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("SSD")}
           styleClasses={`text-[8px] ${wiggleState === 'SSD' ? 'animate-bounce' : ''}`}
           style={rectStyle(zones.m2)}
         />
@@ -644,11 +795,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* PCIe x1 slot 1 - Network Card */}
         <InteractiveDropZone
           label="PCIe x1 (Net)"
-          acceptType="Network"
-          installedComponent={installedComponents["Network"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("Network")}
           styleClasses="text-[8px]"
           style={rectStyle(zones.pcieX1Net)}
         />
@@ -656,11 +803,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* PCIe x1 slot 2 - Sound Card */}
         <InteractiveDropZone
           label="PCIe x1 (Audio)"
-          acceptType="Sound"
-          installedComponent={installedComponents["Sound"]}
-          activeDragItem={activeDragItem}
-          onDrop={handleDrop}
-          compatibilityChecker={checkCompatibility}
+          {...slotProps("Sound")}
           styleClasses="text-[8px]"
           style={rectStyle(zones.pcieX1Snd)}
         />
@@ -674,17 +817,27 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
           <MotherboardIllustration motherboard={mobo} installed={false} />
           <InteractiveDropZone
             label="Mount Motherboard here"
-            acceptType="Motherboard"
-            installedComponent={mobo}
-            activeDragItem={activeDragItem}
-            onDrop={handleDrop}
-            compatibilityChecker={checkCompatibility}
+            {...slotProps("Motherboard")}
             styleClasses="border-primary/50 text-base font-medium"
             style={{ position: "absolute", inset: "6%" }}
           />
         </div>
       );
     }
+
+    // The mounted board is the backdrop itself, so its "uninstall" control floats
+    // over the chassis rather than living inside a drop zone.
+    const removeBoardButton = (
+      <button
+        type="button"
+        onClick={() => handleRemoveComponent("Motherboard")}
+        title={`Remove ${mobo.name} (clears everything mounted on it)`}
+        className="absolute top-2 right-2 z-30 flex items-center gap-1.5 rounded-lg bg-slate-950/85 hover:bg-rose-600 border border-rose-500/50 hover:border-rose-400 text-rose-300 hover:text-white px-2.5 py-1.5 text-[11px] font-semibold shadow-lg backdrop-blur-sm transition-colors"
+      >
+        <X className="size-3.5" strokeWidth={3} />
+        Remove board
+      </button>
+    );
 
     // Real motherboard photo as the board — drop zones overlaid on top of it.
     if (showPhoto) {
@@ -698,6 +851,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
             className="w-full h-auto block select-none pointer-events-none"
           />
           {dropZones}
+          {removeBoardButton}
         </div>
       );
     }
@@ -707,6 +861,7 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
       <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-inner group">
         <MotherboardIllustration motherboard={mobo} installed />
         {dropZones}
+        {removeBoardButton}
       </div>
     );
   };
@@ -716,8 +871,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
       <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         {/* Navbar */}
         <nav className="border-b border-border/50 backdrop-blur-xl bg-card/50 shrink-0 z-50">
-          <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="max-w-[1800px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 shrink-0">
               <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')}>
                 <ArrowLeft className="size-4 mr-2" />
                 Dashboard
@@ -727,22 +882,53 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                 <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <Cpu className="size-4 text-white" />
                 </div>
-                <span className="font-semibold text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <span className="font-semibold text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden xl:inline">
                   PC Assembly Simulator
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Educational Progress — lives in the header so the whole left column
+                is free for the component registry. */}
+            <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-900 to-indigo-800 text-white px-3 py-1.5 shadow-lg shrink-0">
+              <div className="flex items-center gap-1.5 pr-1">
+                <Trophy className="size-4 text-yellow-400" />
+                <span className="text-[11px] font-semibold leading-tight hidden 2xl:block">
+                  Educational<br />Progress
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[
+                  { value: `${completionPercentage}%`, label: "Build", color: "text-sky-300" },
+                  { value: level, label: "Level", color: "text-pink-300" },
+                  { value: xp, label: "XP", color: "text-purple-300" },
+                  { value: `${accuracy}%`, label: "Accuracy", color: "text-emerald-300" }
+                ].map(stat => (
+                  <div key={stat.label} className="px-2 py-1 bg-white/5 rounded-md text-center min-w-[52px]">
+                    <span className={`text-sm font-bold block leading-none ${stat.color}`}>{stat.value}</span>
+                    <span className="text-[8px] opacity-70 uppercase font-bold">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="w-20 hidden lg:block">
+                <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10" />
+                <span className="text-[8px] opacity-70 uppercase font-bold block text-center mt-0.5">
+                  Lv {level + 1}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
               {selectedScenario && (
-                <Badge variant="outline" className="border-primary/30 text-primary">
-                  Scenario: {selectedScenario.title}
+                <Badge variant="outline" className="border-primary/30 text-primary hidden 2xl:inline-flex">
+                  {selectedScenario.title}
                 </Badge>
               )}
               <Button variant="outline" size="sm" onClick={() => handleSelectScenario(null)}>
-                Reset Scenario
+                Reset
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={handleCompleteBuild}
                 className="bg-gradient-to-r from-primary to-secondary text-white font-semibold"
               >
@@ -755,76 +941,50 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
         {/* Main Body — fills the viewport; columns scroll internally so the page itself doesn't scroll */}
         <div className="flex-1 min-h-0 w-full max-w-[1800px] mx-auto px-6 py-4">
 
-          <div className="grid grid-cols-3 gap-6 h-full min-h-0">
+          <div className="grid grid-cols-12 gap-6 h-full min-h-0">
 
-            {/* Column 1: Educational Progress (small card) + Components Library */}
-            <div className="col-span-1 min-h-0 flex flex-col gap-4">
+            {/* Column 1: Component Registry — now the full height of the column,
+                since Educational Progress moved into the header. */}
+            <div className="col-span-5 min-h-0 flex flex-col">
 
-              {/* Educational Progress — small card on the left */}
-              <Card className="backdrop-blur-xl bg-gradient-to-br from-indigo-900 to-indigo-800 border-0 text-white shadow-lg shrink-0">
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="size-4 text-yellow-400" />
-                    <span className="text-sm font-semibold">Educational Progress</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5 text-center">
-                    <div className="py-1 bg-white/5 rounded-md">
-                      <span className="text-base font-bold text-sky-300 block leading-none">{completionPercentage}%</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Build</span>
-                    </div>
-                    <div className="py-1 bg-white/5 rounded-md">
-                      <span className="text-base font-bold text-pink-300 block leading-none">{level}</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Level</span>
-                    </div>
-                    <div className="py-1 bg-white/5 rounded-md">
-                      <span className="text-base font-bold text-purple-300 block leading-none">{xp}</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">XP</span>
-                    </div>
-                    <div className="py-1 bg-white/5 rounded-md">
-                      <span className="text-base font-bold text-emerald-300 block leading-none">{accuracy}%</span>
-                      <span className="text-[8px] opacity-70 uppercase font-bold">Accuracy</span>
-                    </div>
-                  </div>
-                  <Progress value={(xp / (level * 300)) * 100} className="h-1.5 bg-white/10" />
-                </CardContent>
-              </Card>
-
-              {/* Component Registry — fills remaining height and scrolls internally */}
+              {/* Component Registry — fills the column and scrolls internally */}
               <Card className="backdrop-blur-xl bg-card/80 border-primary/20 flex-1 min-h-0 flex flex-col overflow-hidden">
                 <CardHeader className="pb-3 shrink-0">
                   <CardTitle className="text-lg">Component Registry</CardTitle>
-                  <CardDescription>Drag components to build slots</CardDescription>
+                  <CardDescription>Pick a component type, then drag a part into a build slot</CardDescription>
                 </CardHeader>
-                <CardContent className="px-3 pb-4 space-y-3 flex-1 min-h-0 flex flex-col">
+                <CardContent className="px-4 pb-4 space-y-3 flex-1 min-h-0 flex flex-col">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search parts (name, brand)..."
-                      className="h-8 pl-8 text-xs"
+                      className="h-9 pl-8 text-xs"
                     />
                   </div>
 
                   {trimmedSearch ? (
                     <ScrollArea className="flex-1 min-h-0 pr-2">
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         {searchResults.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-6 col-span-3">No parts match "{searchQuery}".</p>
+                          <p className="text-xs text-muted-foreground text-center py-6 col-span-4">No parts match "{searchQuery}".</p>
                         )}
                         {searchResults.map(comp => (
                           <DraggableComponent
                             key={comp.id}
                             component={comp}
                             onSelect={setHighlightedComponent}
+                            onDragStateChange={setActiveDragItem}
                           />
                         ))}
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="flex gap-3 flex-1 min-h-0">
-                      {/* Vertical component-type tab rail */}
-                      <div className="flex flex-col gap-1.5 w-[104px] shrink-0 overflow-y-auto">
+                    <div className="flex flex-col gap-3 flex-1 min-h-0">
+                      {/* Horizontal component-type tab bar — full labels, wraps to as
+                          many rows as it needs so no type name is ever cut off. */}
+                      <div className="flex flex-wrap gap-1.5 shrink-0">
                         {CATEGORY_GROUPS.map(group => {
                           const tab = CATEGORY_TABS[group.id];
                           const Icon = tab?.icon ?? Box;
@@ -835,15 +995,15 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                               key={group.id}
                               onClick={() => setCategoryFilter(group.id)}
                               title={group.label}
-                              className={`flex items-center gap-2 rounded-lg py-2.5 px-2.5 border transition-all ${
+                              className={`flex items-center gap-1.5 rounded-lg py-1.5 px-2.5 border transition-all ${
                                 active
                                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                                   : 'bg-card/60 border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground'
                               }`}
                             >
-                              <Icon className="size-5 shrink-0" />
-                              <span className="text-[11px] font-semibold leading-tight text-left flex-1 truncate">{tab?.short ?? group.label}</span>
-                              <span className={`text-[10px] leading-none font-medium ${active ? 'opacity-80' : 'opacity-60'}`}>{count}</span>
+                              <Icon className="size-4 shrink-0" />
+                              <span className="text-xs font-semibold leading-none whitespace-nowrap">{tab?.short ?? group.label}</span>
+                              <span className={`text-[10px] leading-none font-medium tabular-nums ${active ? 'opacity-80' : 'opacity-60'}`}>{count}</span>
                             </button>
                           );
                         })}
@@ -851,7 +1011,15 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
 
                       {/* Cards for the selected component type */}
                       <ScrollArea className="h-full flex-1 pr-2">
-                        <Accordion type="multiple" defaultValue={brandGroups.slice(0, 1).map(g => g.brand)} className="w-full">
+                        {/* Keyed on the category so switching tabs remounts the accordion
+                            and re-opens every brand — students should see the parts for the
+                            type they just picked without a second click. */}
+                        <Accordion
+                          key={categoryFilter}
+                          type="multiple"
+                          defaultValue={brandGroups.map(g => g.brand)}
+                          className="w-full"
+                        >
                           {brandGroups.map(({ brand, generations }) => (
                             <AccordionItem key={brand} value={brand} className="border-primary/10">
                               <AccordionTrigger className="text-xs font-semibold py-2 hover:no-underline">
@@ -869,12 +1037,13 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                                           {generation}
                                         </p>
                                       )}
-                                      <div className="grid grid-cols-2 gap-2">
+                                      <div className="grid grid-cols-4 gap-2">
                                         {models.map(comp => (
                                           <DraggableComponent
                                             key={comp.id}
                                             component={comp}
                                             onSelect={setHighlightedComponent}
+                                            onDragStateChange={setActiveDragItem}
                                           />
                                         ))}
                                       </div>
@@ -893,46 +1062,39 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
             </div>
 
             {/* Column 2 & 3: Visual Build Area & AI Suggestions — scrolls internally */}
-            <div className="col-span-2 min-h-0 overflow-y-auto space-y-6 pr-1">
-              
+            <div className="col-span-7 min-h-0 overflow-y-auto space-y-6 pr-1">
+
               {/* Build Map Display */}
               <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
                 <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
                       <CardTitle className="text-xl">Assembly Chassis Interior</CardTitle>
-                      <CardDescription>Drag components directly into highlighted motherboard slots.</CardDescription>
+                      <CardDescription>Drag parts into the highlighted slots — press ✕ on a mounted part to take it back out.</CardDescription>
                     </div>
-                    <Badge variant="outline" className="border-indigo-400/40 text-indigo-400 bg-indigo-500/5">
-                      {installedCount} / {requiredParts.length} Essential Mounted
-                    </Badge>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {/* Glanceable compatibility state. The detailed explanation of a
+                          failure comes through the pop-up, not a panel further down. */}
+                      <Badge
+                        variant="outline"
+                        className={compatibilityError
+                          ? "border-rose-500/50 text-rose-400 bg-rose-500/10"
+                          : "border-emerald-500/40 text-emerald-400 bg-emerald-500/10"}
+                      >
+                        {compatibilityError ? (
+                          <><AlertCircle className="size-3.5 mr-1" /> Compatibility issue</>
+                        ) : (
+                          <><ShieldCheck className="size-3.5 mr-1" /> Compatibility OK</>
+                        )}
+                      </Badge>
+                      <Badge variant="outline" className="border-indigo-400/40 text-indigo-400 bg-indigo-500/5">
+                        {installedCount} / {requiredParts.length} Mounted
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
                   {renderMotherboardMap()}
-                </CardContent>
-              </Card>
-
-              {/* Real-time Compatibility Card */}
-              <Card className={`backdrop-blur-xl ${compatibilityError ? 'bg-rose-500/5 border-rose-500/40' : 'bg-emerald-500/5 border-emerald-500/30'}`}>
-                <CardContent className="p-4 flex items-start gap-3">
-                  {compatibilityError ? (
-                    <>
-                      <AlertCircle className="size-6 text-rose-500 shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-sm text-rose-500">Compatibility Alert</h4>
-                        <p className="text-xs text-rose-400 mt-1 leading-relaxed">{compatibilityError}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="size-6 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-sm text-emerald-400">System Compatibility OK</h4>
-                        <p className="text-xs text-emerald-300/80 mt-1">All currently installed parts comply with socket, memory, and wattage requirements.</p>
-                      </div>
-                    </>
-                  )}
                 </CardContent>
               </Card>
 
@@ -1083,47 +1245,9 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                     <CardDescription className="text-xs">Drag external drives & brackets here</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* PSU bay */}
-                    <div className="relative p-3 border border-dashed border-slate-700 rounded-lg flex items-center justify-between">
-                      <div>
-                        <h6 className="text-xs font-semibold">PSU Chamber (Bottom)</h6>
-                        <p className="text-[10px] text-muted-foreground">
-                          {installedComponents["PSU"] ? installedComponents["PSU"].name : "Empty"}
-                        </p>
-                      </div>
-                      <div className="w-[100px] h-[50px] relative">
-                        <InteractiveDropZone
-                          label="Mount PSU"
-                          acceptType="PSU"
-                          installedComponent={installedComponents["PSU"]}
-                          activeDragItem={activeDragItem}
-                          onDrop={handleDrop}
-                          compatibilityChecker={checkCompatibility}
-                          styleClasses="inset-0 text-[10px]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Optical bay */}
-                    <div className="relative p-3 border border-dashed border-slate-700 rounded-lg flex items-center justify-between">
-                      <div>
-                        <h6 className="text-xs font-semibold">Optical 5.25" Bay (Front)</h6>
-                        <p className="text-[10px] text-muted-foreground">
-                          {installedComponents["Optical"] ? installedComponents["Optical"].name : "Empty"}
-                        </p>
-                      </div>
-                      <div className="w-[100px] h-[50px] relative">
-                        <InteractiveDropZone
-                          label="Mount ODD"
-                          acceptType="Optical"
-                          installedComponent={installedComponents["Optical"]}
-                          activeDragItem={activeDragItem}
-                          onDrop={handleDrop}
-                          compatibilityChecker={checkCompatibility}
-                          styleClasses="inset-0 text-[10px]"
-                        />
-                      </div>
-                    </div>
+                    {renderBay("Case Chassis", "Case", "Pick Case")}
+                    {renderBay("PSU Chamber (Bottom)", "PSU", "Mount PSU")}
+                    {renderBay('Optical 5.25" Bay (Front)', "Optical", "Mount ODD")}
                   </CardContent>
                 </Card>
 
@@ -1133,47 +1257,8 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
                     <CardDescription className="text-xs">Mount high-airflow fans & classic HDDs</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* HDD bay */}
-                    <div className="relative p-3 border border-dashed border-slate-700 rounded-lg flex items-center justify-between">
-                      <div>
-                        <h6 className="text-xs font-semibold">HDD 3.5" Drive Cage</h6>
-                        <p className="text-[10px] text-muted-foreground">
-                          {installedComponents["HDD"] ? installedComponents["HDD"].name : "Empty"}
-                        </p>
-                      </div>
-                      <div className="w-[100px] h-[50px] relative">
-                        <InteractiveDropZone
-                          label="Mount HDD"
-                          acceptType="HDD"
-                          installedComponent={installedComponents["HDD"]}
-                          activeDragItem={activeDragItem}
-                          onDrop={handleDrop}
-                          compatibilityChecker={checkCompatibility}
-                          styleClasses="inset-0 text-[10px]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Case Fan bay */}
-                    <div className="relative p-3 border border-dashed border-slate-700 rounded-lg flex items-center justify-between">
-                      <div>
-                        <h6 className="text-xs font-semibold">Case Fan Bracket (Front)</h6>
-                        <p className="text-[10px] text-muted-foreground">
-                          {installedComponents["Fan"] ? installedComponents["Fan"].name : "Empty"}
-                        </p>
-                      </div>
-                      <div className="w-[100px] h-[50px] relative">
-                        <InteractiveDropZone
-                          label="Mount Fan"
-                          acceptType="Fan"
-                          installedComponent={installedComponents["Fan"]}
-                          activeDragItem={activeDragItem}
-                          onDrop={handleDrop}
-                          compatibilityChecker={checkCompatibility}
-                          styleClasses="inset-0 text-[10px]"
-                        />
-                      </div>
-                    </div>
+                    {renderBay('HDD 3.5" Drive Cage', "HDD", "Mount HDD")}
+                    {renderBay("Case Fan Bracket (Front)", "Fan", "Mount Fan")}
                   </CardContent>
                 </Card>
               </div>
@@ -1183,6 +1268,101 @@ export function PCSimulator({ onNavigate }: { onNavigate: (page: string) => void
           </div>
         </div>
       </div>
+
+      {/* Compatibility Alert — a pop-up right in the middle of the screen so the
+          student sees why a part was rejected the moment it happens. */}
+      <AnimatePresence>
+        {compatibilityAlert && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setCompatibilityAlert(null)}
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Compatibility alert"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 12 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 border-2 border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative"
+            >
+              <button
+                type="button"
+                onClick={() => setCompatibilityAlert(null)}
+                aria-label="Close"
+                className="absolute top-3 right-3 size-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="size-12 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-center shrink-0">
+                  <AlertCircle className="size-7 text-rose-500" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider block">
+                    Not Compatible
+                  </span>
+                  <h3 className="text-base font-bold text-slate-100 leading-tight">
+                    {compatibilityAlert.component.name} cannot go there
+                  </h3>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-300 leading-relaxed bg-slate-950/60 border border-slate-800 rounded-lg p-3.5">
+                {compatibilityAlert.message}
+              </p>
+
+              <p className="text-xs text-slate-400 mt-3">
+                The slot is marked with a red ✕. Pick a different {compatibilityAlert.component.type}, or
+                remove an already-mounted part with its ✕ button and try another combination.
+              </p>
+
+              <Button
+                onClick={() => setCompatibilityAlert(null)}
+                className="w-full mt-5 bg-rose-600 hover:bg-rose-500 text-white font-semibold"
+              >
+                Got it
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Placement / removal toast — brief, non-blocking confirmation */}
+      <AnimatePresence>
+        {statusToast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[55] pointer-events-none" key="status-toast">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl max-w-md ${
+                statusToast.tone === "success"
+                  ? "bg-emerald-950/90 border-emerald-500/50"
+                  : "bg-slate-900/95 border-slate-600/60"
+              }`}
+            >
+              {statusToast.tone === "success" ? (
+                <CheckCircle2 className="size-5 text-emerald-400 shrink-0 mt-0.5" />
+              ) : (
+                <Package className="size-5 text-sky-400 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <h4 className={`text-sm font-semibold ${statusToast.tone === "success" ? "text-emerald-300" : "text-slate-100"}`}>
+                  {statusToast.title}
+                </h4>
+                <p className="text-xs text-slate-300/90 mt-0.5 leading-relaxed">{statusToast.detail}</p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Quiz Modal */}
       <AnimatePresence>
