@@ -5,6 +5,10 @@ import { Cpu, Zap, BookOpen, Award, Users, Shield, Rocket, TrendingUp } from "lu
 import { motion } from "motion/react";
 
 export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void }) {
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const features = [
     {
       icon: <Cpu className="size-8 text-primary" />,
@@ -147,7 +151,7 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void
       </section>
 
       {/* Features Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section id="features" className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-4">Why Choose Our Platform?</h2>
           <p className="text-xl text-muted-foreground">Everything you need to become a PC building expert</p>
@@ -193,33 +197,33 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void
             <div>
               <h4 className="font-semibold mb-4">Platform</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer">Features</li>
-                <li className="hover:text-primary cursor-pointer">Tutorials</li>
-                <li className="hover:text-primary cursor-pointer">Components</li>
+                <li className="hover:text-primary cursor-pointer" onClick={scrollToFeatures}>Features</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('tutorials')}>Tutorials</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('components')}>Components</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer">Documentation</li>
-                <li className="hover:text-primary cursor-pointer">Guides</li>
-                <li className="hover:text-primary cursor-pointer">FAQ</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('components')}>Documentation</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('tutorials')}>Guides</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('faq')}>FAQ</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer">Help Center</li>
-                <li className="hover:text-primary cursor-pointer">Contact Us</li>
-                <li className="hover:text-primary cursor-pointer">Community</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('faq')}>Help Center</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('contact')}>Contact Us</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('contact')}>Community</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer">Privacy</li>
-                <li className="hover:text-primary cursor-pointer">Terms</li>
-                <li className="hover:text-primary cursor-pointer">Cookies</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('faq')}>Privacy</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('faq')}>Terms</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => onNavigate('faq')}>Cookies</li>
               </ul>
             </div>
           </div>

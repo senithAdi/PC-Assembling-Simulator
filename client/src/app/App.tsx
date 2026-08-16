@@ -7,8 +7,10 @@ import { ComponentsLearning } from "./components/ComponentsLearning";
 import { Tutorials } from "./components/Tutorials";
 import { BuildHistory } from "./components/BuildHistory";
 import { CompatibilityChecker } from "./components/CompatibilityChecker";
+import { FAQ } from "./components/FAQ";
+import { ContactUs } from "./components/ContactUs";
 
-type Page = 'landing' | 'login' | 'register' | 'dashboard' | 'simulator' | 'components' | 'tutorials' | 'builds' | 'compatibility';
+type Page = 'landing' | 'login' | 'register' | 'dashboard' | 'simulator' | 'components' | 'tutorials' | 'builds' | 'compatibility' | 'faq' | 'contact';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
@@ -33,6 +35,10 @@ export default function App() {
         return <BuildHistory onNavigate={setCurrentPage} />;
       case 'compatibility':
         return <CompatibilityChecker onNavigate={setCurrentPage} />;
+      case 'faq':
+        return <FAQ onNavigate={setCurrentPage} />;
+      case 'contact':
+        return <ContactUs onNavigate={setCurrentPage} />;
       default:
         return <LandingPage onNavigate={setCurrentPage} />;
     }
