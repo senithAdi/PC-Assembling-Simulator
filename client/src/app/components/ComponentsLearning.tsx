@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { Cpu, Zap, HardDrive, Disc, Fan, Box, ArrowLeft, BookOpen, CheckCircle2 } from "lucide-react";
+import { Cpu, Zap, HardDrive, Disc, Fan, Box, ArrowLeft, BookOpen, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
 const componentData = [
@@ -15,23 +14,24 @@ const componentData = [
     color: "from-primary to-primary/70",
     description: "The brain of your computer that processes all instructions",
     overview: [
-      "The CPU, or Central Processing Unit, is often called the \"brain\" of the computer. Almost everything you do — opening an app, loading a web page, running a game's logic — is ultimately carried out as instructions executed by the CPU. It fetches each instruction from memory, decodes what it means, performs the calculation or decision, and stores the result, repeating this cycle billions of times every second.",
-      "Modern CPUs contain multiple cores, which act like several brains working side by side. A quad-core chip can handle four streams of work at once, and technologies such as hyper-threading let each core juggle two tasks at a time. This is why core count matters for multitasking and heavy jobs like video rendering, while a high clock speed (measured in GHz) still drives the snappy, responsive feel of everyday tasks and gaming.",
-      "When choosing a CPU, the two things that matter most are performance for your intended use and compatibility with your motherboard's socket. Intel and AMD are the two main manufacturers, and each generation uses a specific socket (for example Intel's LGA1700 or AMD's AM5), so the CPU and motherboard must always be matched to each other.",
+      { heading: "The brain of the computer", text: "The CPU is often called the brain of the computer. Almost everything you do, from opening an app to loading a web page or running a game, is carried out as instructions that the CPU executes billions of times every second." },
+      { heading: "Cores and clock speed", text: "Modern CPUs have several cores that work side by side, so more cores help with multitasking and heavy jobs like video editing. A higher clock speed, measured in GHz, keeps everyday tasks and games feeling fast and responsive." },
+      { heading: "Choosing the right CPU", text: "Pick a CPU based on how you will use the computer and make sure it fits your motherboard socket. Intel and AMD are the two main brands, and each generation uses a specific socket such as Intel LGA1700 or AMD AM5, so the two must always match." },
     ],
-    keySpecs: ["Cores & Threads", "Clock Speed (GHz)", "Cache Size", "Socket Type"],
-    compatibilityNotes: "Must match motherboard socket type (e.g., LGA1700, AM5)",
+    keySpecs: [
+      { label: "Cores and Threads", hint: "How many tasks it handles at once" },
+      { label: "Clock Speed (GHz)", hint: "How fast each core runs" },
+      { label: "Cache Size", hint: "Small ultra fast on chip memory" },
+      { label: "Socket Type", hint: "Must match the motherboard" },
+    ],
+    compatibilityNotes: "Must match the motherboard socket type, for example LGA1700 or AM5.",
     useCases: ["Gaming", "Video Editing", "Programming", "General Computing"],
     details: [
-      { title: "What is a CPU?", content: "The CPU is the primary component that executes instructions from programs. It performs calculations, makes decisions, and coordinates all other computer components." },
-      { title: "Cores vs Threads", content: "Cores are physical processing units. More cores allow the CPU to handle multiple tasks simultaneously. Threads enable each core to work on multiple tasks through hyper-threading." },
-      { title: "Clock Speed", content: "Measured in GHz (gigahertz), this indicates how many instructions a CPU can process per second. Higher speeds mean faster performance for single-threaded tasks." },
-      { title: "Choosing a CPU", content: "Consider your budget, intended use (gaming vs productivity), and compatibility with your motherboard. Popular brands include Intel and AMD." }
+      { title: "What is a CPU?", content: "It runs the instructions from every program and coordinates all the other components." },
+      { title: "Cores vs Threads", content: "Cores are physical units that work in parallel, and threads let each core handle more than one task." },
+      { title: "What is clock speed?", content: "Measured in GHz, it shows how fast a core works, which helps everyday and gaming tasks feel quick." },
+      { title: "How do I choose one?", content: "Match it to your budget and use, then make sure it fits your motherboard socket." },
     ],
-    quiz: [
-      { question: "What does CPU stand for?", options: ["Central Processing Unit", "Computer Power Unit", "Core Processing Unit"], answer: 0 },
-      { question: "Higher core count is better for?", options: ["Single-threaded apps", "Multitasking", "Gaming only"], answer: 1 }
-    ]
   },
   {
     id: "gpu",
@@ -40,20 +40,24 @@ const componentData = [
     color: "from-secondary to-secondary/70",
     description: "Renders graphics and accelerates visual processing",
     overview: [
-      "The GPU, or Graphics Processing Unit, is a specialised processor built to handle images, video, and 3D graphics. Where a CPU has a handful of very powerful cores, a GPU has hundreds or thousands of smaller cores that work together to perform many simple calculations at the same time — exactly what is needed to draw millions of pixels on screen smoothly and quickly.",
-      "GPUs come in two forms. Integrated graphics are built directly into the CPU and are perfectly fine for web browsing, office work, and light gaming. Dedicated graphics cards are separate, far more powerful units and are essential for modern gaming, 3D modelling, video editing, and AI or machine-learning work.",
-      "The specs to watch are the amount of video memory (VRAM), which stores textures and frame data for high resolutions, and the card's power draw. A dedicated GPU needs a PCIe x16 slot on the motherboard and a power supply with enough wattage and the correct connectors, so always confirm that your PSU and case can support the card before you buy it.",
+      { heading: "Built for graphics", text: "The GPU is a processor made for images, video, and 3D graphics. It has hundreds or thousands of small cores that work at the same time to draw millions of pixels on screen smoothly." },
+      { heading: "Integrated or dedicated", text: "Integrated graphics are built into the CPU and suit browsing, office work, and light gaming. A dedicated graphics card is a separate and far more powerful unit that you need for modern gaming, 3D design, video editing, and AI work." },
+      { heading: "What to check before buying", text: "Look at the amount of video memory, called VRAM, which stores textures for high resolutions, and check the power the card needs. A dedicated GPU uses a PCIe x16 slot and requires a power supply with enough wattage and the correct connectors." },
     ],
-    keySpecs: ["VRAM Size", "CUDA/Stream Processors", "Clock Speed", "Power Consumption"],
-    compatibilityNotes: "Requires PCIe x16 slot and sufficient PSU wattage",
+    keySpecs: [
+      { label: "VRAM Size", hint: "Memory for textures and high resolutions" },
+      { label: "Stream and CUDA Cores", hint: "Parallel units that draw the image" },
+      { label: "Clock Speed", hint: "How fast the GPU runs" },
+      { label: "Power Consumption", hint: "Wattage your power supply must give" },
+    ],
+    compatibilityNotes: "Requires a PCIe x16 slot and a power supply with enough wattage.",
     useCases: ["Gaming", "3D Rendering", "Video Editing", "Machine Learning"],
     details: [
-      { title: "What is a GPU?", content: "The GPU specializes in rendering images, videos, and animations. It's essential for gaming, video editing, and any graphics-intensive tasks." },
-      { title: "Integrated vs Dedicated", content: "Integrated GPUs are built into CPUs (lower performance, no extra cost). Dedicated GPUs are separate cards (high performance, additional cost)." },
-      { title: "VRAM Importance", content: "Video RAM (VRAM) stores textures and graphical data. More VRAM allows handling higher resolutions and more complex scenes. 8GB+ recommended for modern gaming." },
-      { title: "Choosing a GPU", content: "Match GPU to your monitor resolution and refresh rate. Consider power requirements - high-end GPUs need 650W+ power supplies. NVIDIA and AMD are main manufacturers." }
+      { title: "What is a GPU?", content: "It renders images, video, and animations, which makes it essential for games and creative work." },
+      { title: "Integrated vs Dedicated", content: "Integrated graphics sit inside the CPU, while a dedicated card is separate and far more powerful." },
+      { title: "Why does VRAM matter?", content: "VRAM stores textures and frame data, so more of it helps at higher resolutions." },
+      { title: "How do I choose one?", content: "Match it to your monitor and make sure your power supply can handle it." },
     ],
-    quiz: []
   },
   {
     id: "ram",
@@ -62,20 +66,24 @@ const componentData = [
     color: "from-accent to-accent/70",
     description: "Temporary fast storage for active programs and data",
     overview: [
-      "RAM, or Random Access Memory, is your computer's short-term memory. It holds the data and programs that are currently in use so the CPU can reach them almost instantly. Unlike a hard drive or SSD, RAM is volatile — everything stored in it is cleared the moment the computer powers off.",
-      "The more RAM you have, the more applications and browser tabs you can keep open at once without the system slowing down or stuttering. For most students and gamers, 16GB is the comfortable sweet spot; 8GB is enough for basic browsing and office work, while content creators and heavy multitaskers benefit from 32GB or more.",
-      "RAM comes in generations such as DDR4 and DDR5, and it runs at different speeds (measured in MHz) with different latencies. It must match what the motherboard and CPU support. Installing two matched sticks so they run in dual channel is also noticeably faster than using a single stick of the same total capacity.",
+      { heading: "Short term memory", text: "RAM is the short term memory of the computer. It holds the programs and data you are using right now so the CPU can reach them instantly. Everything in RAM is cleared when the computer powers off." },
+      { heading: "How much you need", text: "More RAM lets you keep more apps and browser tabs open at once without slowing down. 8GB suits basic use, 16GB is the comfortable choice for gaming and general use, and 32GB or more helps with content creation and heavy multitasking." },
+      { heading: "Speed and matching", text: "RAM comes in generations such as DDR4 and DDR5 and runs at different speeds in MHz. It must match what your motherboard supports, and fitting two matched sticks so they run in dual channel is faster than a single stick of the same size." },
     ],
-    keySpecs: ["Capacity (GB)", "Speed (MHz)", "Type (DDR4/DDR5)", "Latency (CAS)"],
-    compatibilityNotes: "Must match motherboard RAM type and speed support",
+    keySpecs: [
+      { label: "Capacity (GB)", hint: "How many programs stay open at once" },
+      { label: "Speed (MHz)", hint: "How quickly data moves" },
+      { label: "Type (DDR4 or DDR5)", hint: "Generation the board supports" },
+      { label: "Latency (CAS)", hint: "Response delay, lower is better" },
+    ],
+    compatibilityNotes: "Must match the memory type and speed the motherboard supports.",
     useCases: ["Multitasking", "Gaming", "Content Creation", "Virtual Machines"],
     details: [
-      { title: "What is RAM?", content: "RAM provides fast, temporary storage for actively running programs and data. When you close a program, its data is cleared from RAM." },
-      { title: "How Much RAM Do You Need?", content: "8GB: Basic use, 16GB: Gaming & general use (recommended), 32GB+: Content creation, heavy multitasking, professional work." },
-      { title: "RAM Speed & Timings", content: "Speed (MHz) affects data transfer rate. Lower latency (CAS) is better. DDR5 is newer and faster than DDR4, but requires compatible motherboard." },
-      { title: "Dual Channel vs Single", content: "Using two RAM sticks (dual channel) provides better performance than one stick of the same total capacity. Always populate RAM slots in pairs when possible." }
+      { title: "What is RAM?", content: "It gives the CPU fast temporary space for the programs you are using right now." },
+      { title: "How much do I need?", content: "8GB for basics, 16GB for gaming and general use, and 32GB or more for heavy work." },
+      { title: "What about speed and timings?", content: "Higher MHz moves data faster and lower latency responds quicker, and DDR5 is newer than DDR4." },
+      { title: "What is dual channel?", content: "Two matched sticks run faster than one stick of the same total size." },
     ],
-    quiz: []
   },
   {
     id: "storage",
@@ -84,20 +92,24 @@ const componentData = [
     color: "from-primary to-secondary",
     description: "Permanent storage for operating system, programs, and files",
     overview: [
-      "Storage is where your operating system, applications, and personal files live permanently — the data stays safe even when the power is turned off. It is the long-term memory of the computer, in contrast to RAM, which is only a fast temporary workspace.",
-      "There are two main types. Hard disk drives (HDDs) store data on spinning magnetic platters; they are inexpensive and offer huge capacity, but they are slow and have moving parts that can wear out. Solid-state drives (SSDs) have no moving parts, so they are far faster, silent, and more reliable. A popular approach is to use a fast SSD for the operating system and games, together with a large HDD for mass storage of photos and videos.",
-      "SSDs themselves come in two connection types. SATA SSDs connect with a cable and are already much faster than any HDD. NVMe SSDs are small M.2 sticks that plug directly into the motherboard and are several times faster again. Before buying, check which M.2 slots and SATA ports your motherboard provides.",
+      { heading: "Long term memory", text: "Storage is where your operating system, apps, and files stay permanently, even when the power is off. Unlike RAM, it keeps your data safe for the long term." },
+      { heading: "SSD or HDD", text: "A hard disk drive, or HDD, is cheap and offers large capacity but is slow. A solid state drive, or SSD, has no moving parts, so it is much faster, quieter, and more reliable. Many builds use an SSD for the system and a large HDD for extra storage." },
+      { heading: "Connection types", text: "SATA drives connect with a cable and are already far quicker than a hard disk. NVMe drives are small M.2 sticks that plug straight into the motherboard and are faster again. Check which M.2 slots and SATA ports your board has before buying." },
     ],
-    keySpecs: ["Capacity", "Read/Write Speed", "Interface (SATA/NVMe)", "Form Factor"],
-    compatibilityNotes: "Check for M.2 slots (NVMe) or SATA ports on motherboard",
+    keySpecs: [
+      { label: "Capacity", hint: "How much you can store" },
+      { label: "Read and Write Speed", hint: "How fast files load and save" },
+      { label: "Interface (SATA or NVMe)", hint: "Cable drive or M.2 slot" },
+      { label: "Form Factor", hint: "Physical size and how it mounts" },
+    ],
+    compatibilityNotes: "Check the motherboard for M.2 slots for NVMe drives or SATA ports for cable drives.",
     useCases: ["OS Installation", "Game Library", "File Storage", "Media Collections"],
     details: [
-      { title: "SSD vs HDD", content: "SSDs are faster, silent, and more durable but more expensive. HDDs offer more storage for less money but are slower. Recommendation: SSD for OS and programs, HDD for mass storage." },
-      { title: "NVMe vs SATA SSD", content: "NVMe SSDs use M.2 slot and are 5-7x faster than SATA SSDs. SATA SSDs use cable connection. Both are much faster than HDDs." },
-      { title: "Storage Capacity Planning", content: "OS + Programs: 500GB SSD minimum, Gaming: 1TB+ SSD recommended (modern games are 50-150GB each), Media Storage: Consider 2-4TB HDD." },
-      { title: "Form Factors", content: "M.2: Small stick that plugs directly into motherboard (NVMe or SATA). 2.5\": Laptop-sized drives (SSDs). 3.5\": Desktop-sized drives (HDDs)." }
+      { title: "SSD vs HDD", content: "SSDs are fast and reliable, while HDDs are cheaper with more space for the money." },
+      { title: "NVMe vs SATA", content: "NVMe M.2 drives are much faster than SATA drives, and both beat a hard disk." },
+      { title: "How much capacity?", content: "Aim for at least a 500GB SSD, then add more space for a large game or media library." },
+      { title: "What are form factors?", content: "M.2 sticks fit on the board, while 2.5 inch and 3.5 inch drives mount inside the case." },
     ],
-    quiz: []
   },
   {
     id: "psu",
@@ -106,20 +118,24 @@ const componentData = [
     color: "from-secondary to-accent",
     description: "Converts AC power to DC and distributes it to components",
     overview: [
-      "The PSU, or Power Supply Unit, takes the high-voltage alternating current (AC) from your wall socket and converts it into the low-voltage direct current (DC) that computer components actually need. It then delivers clean, stable power to the motherboard, CPU, graphics card, drives, and fans.",
-      "Choosing the right wattage is essential. Add up the power draw of your components — the GPU and CPU are usually the biggest — and leave roughly 20% of headroom so the supply never has to run at its absolute limit. A PSU that is too weak leads to random crashes and, in the worst case, can damage other parts.",
-      "Quality matters more here than almost anywhere else in the build, because the power supply protects everything connected to it. Look for an 80 Plus efficiency rating (from Bronze up to Titanium) for less wasted heat and lower running costs, and consider a modular design, which lets you attach only the cables you need for cleaner airflow inside the case.",
+      { heading: "Powers everything", text: "The power supply takes the alternating current from your wall socket and turns it into the steady low voltage direct current that computer parts need. It then feeds clean power to the motherboard, CPU, graphics card, drives, and fans." },
+      { heading: "Getting the wattage right", text: "Add up the power your parts draw, mostly the GPU and CPU, and leave about 20 percent of headroom so the supply never runs at its limit. A supply that is too weak causes crashes and can even damage components." },
+      { heading: "Why quality matters", text: "The power supply protects everything connected to it, so quality is important. Choose one with an 80 Plus efficiency rating for less wasted heat, and consider a modular design that lets you attach only the cables you need for tidier airflow." },
     ],
-    keySpecs: ["Wattage", "Efficiency Rating", "Modular/Non-Modular", "Connectors"],
-    compatibilityNotes: "Calculate total system power draw + 20% headroom",
+    keySpecs: [
+      { label: "Wattage", hint: "Total power it can deliver" },
+      { label: "Efficiency Rating", hint: "80 Plus level, less wasted heat" },
+      { label: "Modular Cables", hint: "Attach only the cables you need" },
+      { label: "Connectors", hint: "Plugs for the board, CPU, and GPU" },
+    ],
+    compatibilityNotes: "Add up the total power your system draws and add about 20 percent of headroom.",
     useCases: ["Power Distribution", "Voltage Regulation", "System Stability"],
     details: [
-      { title: "Understanding Wattage", content: "PSU wattage must exceed total system power consumption. Calculate: CPU + GPU + 100W for other components + 20% safety margin." },
-      { title: "Efficiency Ratings", content: "80 Plus certifications (Bronze, Silver, Gold, Platinum, Titanium) indicate how efficiently PSU converts AC to DC. Higher efficiency = less heat and lower electricity bills." },
-      { title: "Modular vs Non-Modular", content: "Non-modular: All cables permanently attached. Semi-modular: Main cables attached. Fully modular: All cables detachable. Modular improves cable management." },
-      { title: "Sizing Your PSU", content: "Budget PC (350-450W), Mid-range gaming (550-650W), High-end gaming (750-850W), Enthusiast/Multi-GPU (1000W+). Don't skimp - quality PSU protects your components." }
+      { title: "Understanding wattage", content: "The supply must provide more power than all your parts draw combined, plus some headroom." },
+      { title: "What are efficiency ratings?", content: "An 80 Plus rating shows how efficiently it works, which means less wasted heat." },
+      { title: "What are modular cables?", content: "Modular supplies let you attach only the cables you need for cleaner airflow." },
+      { title: "How do I size a PSU?", content: "Budget builds need around 450W, while high end gaming builds often need 750W or more." },
     ],
-    quiz: []
   },
   {
     id: "case",
@@ -128,25 +144,30 @@ const componentData = [
     color: "from-accent to-primary",
     description: "Houses and protects all components with airflow",
     overview: [
-      "The PC case, also called the chassis, is the enclosure that holds and protects every other component. It provides the mounting points for the motherboard, drives, power supply, and fans, and its design shapes how air flows through the system to keep everything cool.",
-      "Cases come in sizes that match motherboard form factors: full tower (largest, most room to expand), mid tower (the most popular, well-balanced choice), and the compact micro-ATX and mini-ITX sizes. The case you pick must be large enough for your motherboard, long enough for your graphics card, and tall enough for your CPU cooler.",
-      "Beyond size, airflow is what keeps a build running cool and quiet, so look for a mesh front panel and space for both intake and exhaust fans. Practical touches such as cable-management routing holes, removable dust filters, and a power-supply shroud make the build tidier, cooler, and much easier to maintain over time.",
+      { heading: "The home for your parts", text: "The case, also called the chassis, holds and protects every other component. It gives the motherboard, drives, power supply, and fans a place to mount and guides air through the system to keep things cool." },
+      { heading: "Pick the right size", text: "Cases match motherboard sizes: full tower with the most room, mid tower as the popular balanced choice, and the compact Micro ATX and Mini ITX sizes. The case must fit your board, your graphics card length, and your cooler height." },
+      { heading: "Airflow and features", text: "Good airflow keeps a build cool and quiet, so look for a mesh front and space for intake and exhaust fans. Handy features like cable routing holes, dust filters, and a power supply shroud make the build tidy and easy to maintain." },
     ],
-    keySpecs: ["Form Factor", "Fan Mounts", "Drive Bays", "Cable Management"],
-    compatibilityNotes: "Must fit motherboard size (ATX, Micro-ATX, Mini-ITX)",
+    keySpecs: [
+      { label: "Form Factor", hint: "Board sizes it can fit" },
+      { label: "Fan Mounts", hint: "Room for cooling airflow" },
+      { label: "Drive Bays", hint: "Slots for SSDs and HDDs" },
+      { label: "Cable Management", hint: "Space to route cables neatly" },
+    ],
+    compatibilityNotes: "Must fit the motherboard size, such as ATX, Micro ATX, or Mini ITX.",
     useCases: ["Component Housing", "Cooling Airflow", "Aesthetics"],
     details: [
-      { title: "Case Sizes", content: "Full Tower: Largest, most expansion. Mid Tower: Most popular, good balance. Micro/Mini: Compact, limited expansion. Choose based on motherboard size and cooling needs." },
-      { title: "Airflow & Cooling", content: "Good cases have front intake fans and rear/top exhaust fans. Mesh front panels provide better airflow than solid. Plan for at least 2-3 fans minimum." },
-      { title: "Build Quality", content: "Check for: Tempered glass vs acrylic side panel, PSU shroud for cable hiding, removable dust filters, cable routing holes, drive cages." },
-      { title: "Aesthetics vs Function", content: "RGB lighting is optional but popular. Prioritize airflow and build quality over looks. Ensure case has enough clearance for tall CPU coolers and long GPUs." }
+      { title: "What sizes are there?", content: "Full tower offers the most room, mid tower is the balanced favourite, and Micro or Mini sizes stay compact." },
+      { title: "How does airflow work?", content: "Intake and exhaust fans with a mesh front keep temperatures low." },
+      { title: "What makes a good case?", content: "Look for tempered glass, dust filters, and room to route cables neatly." },
+      { title: "Looks or function?", content: "Put airflow and clearance for tall coolers and long cards ahead of lighting." },
     ],
-    quiz: []
-  }
+  },
 ];
 
 export function ComponentsLearning({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [selectedComponent, setSelectedComponent] = useState(componentData[0]);
+  const shortName = selectedComponent.name.split('(')[0].trim();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -211,10 +232,7 @@ export function ComponentsLearning({ onNavigate }: { onNavigate: (page: string) 
                           <div className={`size-10 rounded-lg bg-gradient-to-br ${component.color} flex items-center justify-center shrink-0`}>
                             <component.icon className="size-5 text-white" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm truncate">{component.name.split('(')[0]}</h4>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{component.description}</p>
-                          </div>
+                          <h4 className="font-semibold text-sm truncate">{component.name.split('(')[0].trim()}</h4>
                         </div>
                       </CardContent>
                     </Card>
@@ -249,34 +267,43 @@ export function ComponentsLearning({ onNavigate }: { onNavigate: (page: string) 
 
               {/* Detailed Information */}
               <Tabs defaultValue="learn" className="w-full">
-                <TabsList className="grid grid-cols-4 w-full">
+                <TabsList className="grid grid-cols-3 w-full">
                   <TabsTrigger value="learn">Learn</TabsTrigger>
                   <TabsTrigger value="specs">Key Specs</TabsTrigger>
                   <TabsTrigger value="compatibility">Compatibility</TabsTrigger>
-                  <TabsTrigger value="quiz">Quiz</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="learn" className="space-y-4">
                   {/* Overview */}
-                  <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
+                  <Card className="backdrop-blur-xl bg-card/80 border-primary/20 overflow-hidden">
+                    <div className={`h-1.5 bg-gradient-to-r ${selectedComponent.color}`} />
                     <CardHeader>
-                      <CardTitle>Overview</CardTitle>
-                      <CardDescription>A clear introduction to {selectedComponent.name.split('(')[0].trim()}</CardDescription>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="size-5 text-primary" />
+                        <CardTitle>Overview</CardTitle>
+                      </div>
+                      <CardDescription>A clear introduction to {shortName}</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      {selectedComponent.overview.map((paragraph, i) => (
-                        <p key={i} className="text-muted-foreground leading-relaxed">
-                          {paragraph}
-                        </p>
+                    <CardContent className="space-y-5">
+                      {selectedComponent.overview.map((block, i) => (
+                        <div key={i} className="flex gap-4">
+                          <div className={`size-9 shrink-0 rounded-xl bg-gradient-to-br ${selectedComponent.color} text-white flex items-center justify-center font-semibold`}>
+                            {i + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-1">{block.heading}</h4>
+                            <p className="text-muted-foreground leading-relaxed">{block.text}</p>
+                          </div>
+                        </div>
                       ))}
                     </CardContent>
                   </Card>
 
-                  {/* Deep-dive accordion */}
+                  {/* Brief question and answer accordion */}
                   <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
                     <CardHeader>
-                      <CardTitle>Understanding {selectedComponent.name.split('(')[0].trim()}</CardTitle>
-                      <CardDescription>Explore each topic in more detail</CardDescription>
+                      <CardTitle>Explore each topic in more detail</CardTitle>
+                      <CardDescription>Quick answers to common questions</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Accordion type="single" collapsible className="w-full">
@@ -299,14 +326,20 @@ export function ComponentsLearning({ onNavigate }: { onNavigate: (page: string) 
                   <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
                     <CardHeader>
                       <CardTitle>Key Specifications</CardTitle>
-                      <CardDescription>Important specs to consider when choosing</CardDescription>
+                      <CardDescription>The important specs to look at when choosing</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
+                      <div className="grid sm:grid-cols-2 gap-3">
                         {selectedComponent.keySpecs.map((spec, i) => (
-                          <div key={i} className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-                            <CheckCircle2 className="size-5 text-primary shrink-0" />
-                            <span className="font-medium">{spec}</span>
+                          <div
+                            key={i}
+                            className="p-4 rounded-xl bg-muted/30 border border-border/50 hover:border-primary/40 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="size-4 text-primary shrink-0" />
+                              <span className="font-semibold text-sm">{spec.label}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pl-6">{spec.hint}</p>
                           </div>
                         ))}
                       </div>
@@ -321,60 +354,28 @@ export function ComponentsLearning({ onNavigate }: { onNavigate: (page: string) 
                       <CardDescription>What you need to know before buying</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="p-6 rounded-xl bg-accent/10 border border-accent/20">
-                        <p className="font-medium mb-2 text-accent">Important Note:</p>
-                        <p className="text-muted-foreground">{selectedComponent.compatibilityNotes}</p>
+                      <div className="flex gap-3 p-5 rounded-xl bg-accent/10 border border-accent/20">
+                        <Info className="size-5 text-accent shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium mb-1 text-accent">Important note</p>
+                          <p className="text-muted-foreground">{selectedComponent.compatibilityNotes}</p>
+                        </div>
                       </div>
 
                       <div className="mt-6">
-                        <h4 className="font-semibold mb-4">Best Use Cases:</h4>
+                        <h4 className="font-semibold mb-4">Best use cases</h4>
                         <div className="grid grid-cols-2 gap-3">
                           {selectedComponent.useCases.map((useCase, i) => (
-                            <div key={i} className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20"
+                            >
+                              <CheckCircle2 className="size-4 text-primary shrink-0" />
                               <span className="font-medium text-sm">{useCase}</span>
                             </div>
                           ))}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="quiz">
-                  <Card className="backdrop-blur-xl bg-card/80 border-primary/20">
-                    <CardHeader>
-                      <CardTitle>Test Your Knowledge</CardTitle>
-                      <CardDescription>Check what you've learned</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {selectedComponent.quiz.length > 0 ? (
-                        <div className="space-y-6">
-                          {selectedComponent.quiz.map((q, i) => (
-                            <div key={i} className="space-y-3">
-                              <h4 className="font-semibold">{i + 1}. {q.question}</h4>
-                              <div className="space-y-2">
-                                {q.options.map((option, oi) => (
-                                  <Button
-                                    key={oi}
-                                    variant="outline"
-                                    className="w-full justify-start text-left h-auto py-3"
-                                  >
-                                    {option}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                          <Button className="w-full bg-gradient-to-r from-primary to-secondary">
-                            Submit Answers
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <BookOpen className="size-12 mx-auto mb-4 opacity-50" />
-                          <p>Quiz coming soon! Complete the learning material first.</p>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
